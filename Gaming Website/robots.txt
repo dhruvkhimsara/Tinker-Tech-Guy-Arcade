@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dhruvkhimsara.github.io/Tinker-Tech-Guy-Arcade/sitemap.xml
