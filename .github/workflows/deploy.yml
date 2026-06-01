@@ -1,0 +1,62 @@
+name: Build and Deploy Arcade
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Sync Arcade
+        run: python "Gaming Website/UI/Sync Arcade.py"
+
+      - name: Commit Updated Index
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add "Gaming Website/UI/index.html"
+          git diff --staged --quiet || git commit -m "Auto-update arcade"
+          git push
+
+      - name: Build Site
+        run: |
+          mkdir site
+          cp -r "Gaming Website/Games" site/
+          cp "Gaming Website/UI/index.html" site/index.html
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
