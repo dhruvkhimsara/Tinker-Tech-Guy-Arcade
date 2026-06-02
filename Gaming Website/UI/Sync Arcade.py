@@ -165,7 +165,6 @@ def generate_arcade():
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: #000000;
-            display: none;
             place-items: center;
             padding: 20px;
         }}
@@ -175,21 +174,21 @@ def generate_arcade():
             background-color: #050505;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             
-            /* Give it maximum flexibility within bounds */
+            /* Box scales perfectly to viewport, preserving a true 16:9 boundary box */
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
             overflow: hidden; 
         }}
 
         iframe {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1920px;  /* Full virtual workspace baseline width */
-            height: 1080px; /* Full virtual workspace baseline height */
+            width: 100% !important;
+            height: 100% !important;
             border: none !important;
             display: block !important;
-            transform-origin: top left; 
+            position: relative;
+            top: 0;
+            left: 0;
+            transform: none !important; /* Stripped out custom vector scaler transforms */
         }}
     </style>
 </head>
@@ -222,33 +221,14 @@ def generate_arcade():
         const wrapper = document.getElementById('game-frame-wrapper');
 
         function sendResizeToGame() {{
-            const rect = wrapper.getBoundingClientRect();
-            
-            const virtualW = 1920;
-            const virtualH = 1080;
-            
-            // Dual-Axis Aspect Ratio Fit Controller (calculates scaling matrix factors)
-            const scaleX = rect.width / virtualW;
-            const scaleY = rect.height / virtualH;
-            
-            // Use Math.min to guarantee it shrinks to fit whichever side is more restricted.
-            // It is now physically impossible for any side to overflow or cut off!
-            const finalScaleFactor = Math.min(scaleX, scaleY);
-            
-            // Hardware accelerated vector transform scale matrix adjustment
-            iframe.style.transform = 'scale(' + finalScaleFactor + ')';
-            
-            // Center the canvas frame inside the wrapper bounds if there's letterboxing
-            const leftoverWidth = rect.width - (virtualW * finalScaleFactor);
-            const leftoverHeight = rect.height - (virtualH * finalScaleFactor);
-            iframe.style.left = (leftoverWidth / 2) + 'px';
-            iframe.style.top = (leftoverHeight / 2) + 'px';
-
             if (iframe.contentWindow) {{
+                const rect = wrapper.getBoundingClientRect();
+                
+                // Direct layout dimension force payload execution
                 iframe.contentWindow.postMessage({{
                     type: 'ARCADE_RESIZE_COMMAND',
-                    width: virtualW,
-                    height: virtualH
+                    width: Math.floor(rect.width),
+                    height: Math.floor(rect.height)
                 }}, '*');
             }}
         }}
@@ -259,7 +239,8 @@ def generate_arcade():
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            setTimeout(sendResizeToGame, 50);
+            // Allow frame system a split second to lock positions before rendering sizes
+            setTimeout(sendResizeToGame, 60);
         }}
 
         function showBrowseView() {{
