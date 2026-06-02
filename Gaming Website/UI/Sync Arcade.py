@@ -68,8 +68,8 @@ def generate_arcade():
             height: 70px;
             display: flex;
             align-items: center;
-            justify-content: flex-end; /* Keeps navigation elements cleanly aligned to the right */
-            position: relative;        /* Necessary context anchor to center the absolute child logo */
+            justify-content: flex-end; 
+            position: relative;        
             flex-shrink: 0;
             z-index: 100;
         }}
@@ -82,8 +82,6 @@ def generate_arcade():
             color: var(--text-main);
             user-select: none;
             cursor: pointer;
-            
-            /* Absolute centering mechanics */
             position: absolute;
             left: 50%;
             top: 50%;
@@ -177,13 +175,18 @@ def generate_arcade():
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
+            overflow: hidden; /* Clips the unscaled oversized layout boundary */
         }}
 
         iframe {{
-            width: 100% !important;
-            height: 100% !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1280px;  /* Fixed high-res base canvas width */
+            height: 720px;  /* Fixed high-res base canvas height */
             border: none !important;
             display: block !important;
+            transform-origin: top left; /* Anchor scaling to upper-left corner */
         }}
     </style>
 </head>
@@ -216,8 +219,16 @@ def generate_arcade():
         const wrapper = document.getElementById('game-frame-wrapper');
 
         function sendResizeToGame() {{
+            const rect = wrapper.getBoundingClientRect();
+            const baseVirtualWidth = 1280;
+            
+            // Calculate scale vector ratio based on viewport bounding constraints
+            const scaleFactor = rect.width / baseVirtualWidth;
+            
+            // Scaler matrix implementation
+            iframe.style.transform = 'scale(' + scaleFactor + ')';
+
             if (iframe.contentWindow) {{
-                const rect = wrapper.getBoundingClientRect();
                 iframe.contentWindow.postMessage({{
                     type: 'ARCADE_RESIZE_COMMAND',
                     width: rect.width,
