@@ -121,36 +121,34 @@
             text-align: center;
         }
 
-        /* --- NEW REDESIGNED DEVICE-ADAPTIVE VIEWPORT --- */
+        /* --- THE ANTI-STICK ABSOLUTE GRID FIX --- */
         #play-view {
-            display: none;
-            width: 100%;
-            height: 100%;
+            display: none; /* Controlled by JavaScript toggles */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: #000000;
             box-sizing: border-box;
             
-            /* This is the padding zone directly underneath the top bar. 
-               It acts as a flexible cushion that forces the game content to 
-               perfectly center itself vertically and horizontally. */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px; 
+            /* Using CSS Grid placeholder alignment forces the child wrapper 
+               to center perfectly on its vertical and horizontal cross-axes, 
+               overriding inner canvas-collapse behaviors completely. */
+            display: grid;
+            place-items: center;
+            padding: 30px; 
         }
 
-        /* This wrapper reads device limits dynamically and constrains the iframe */
+        /* Responsive Framing Wrapper with adaptive device fallbacks */
         #game-frame-wrapper {
             width: 100%;
             height: 100%;
-            /* Forces a strict 16:9 arcade aspect ratio layout on widescreen environments */
             aspect-ratio: 16 / 9; 
             max-width: 100%;
             max-height: 100%;
             background-color: #050505;
             box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         iframe {
@@ -160,16 +158,14 @@
             display: block !important;
         }
 
-        /* --- MOBILE DEVICE SIZING LOGIC EXTRA ---
-           If the player is on a tall screen device (like a portrait phone), 
-           reconfigure layout spacing rules so games don't squish down excessively. */
+        /* --- MOBILE DEVICE SIZING LOGIC EXTRA --- */
         @media (max-aspect-ratio: 1/1) {
             #play-view {
-                padding: 10px 5px; /* Tighter safety padding for narrow portrait screens */
+                padding: 10px; 
             }
             #game-frame-wrapper {
-                aspect-ratio: auto; /* Relaxes strict landscape restrictions for better mobile fit */
-                height: 60vh;       /* Limits fallback height bounds on mobile browsers */
+                aspect-ratio: auto; 
+                height: 65vh;       
             }
         }
     </style>
@@ -231,11 +227,10 @@
             iframe.src = gameFilePath;
             browseView.style.display = 'none';
             
-            // Adjust Display Mode using dynamic CSS layout rules
-            playView.style.display = 'flex'; 
+            // Activate the grid system 
+            playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            // Force rendering refresh pass on device dimension load configurations
             handleDynamicDeviceResize();
         }
 
@@ -248,28 +243,21 @@
 
         // --- AUTOMATIC DEVICE RESIZE SENSOR ---
         function handleDynamicDeviceResize() {
-            if (playView.style.display !== 'flex') return;
+            if (playView.style.display !== 'grid') return;
 
-            // Detect current window frame measurements
             const currentWidth = window.innerWidth;
-            const currentHeight = window.innerHeight - 70; // Header offset accounts
-            
             const wrapper = document.getElementById('game-frame-wrapper');
 
-            // Responsive Layout Rules Engine
+            // Responsive Width Thresholds for Desktop vs Tablets vs Mobile Screens
             if (currentWidth < 768) {
-                // Mobile View Optimization parameters
-                wrapper.style.width = "96%";
+                wrapper.style.width = "98%";
             } else if (currentWidth >= 768 && currentWidth <= 1024) {
-                // Tablet View Optimization parameters
-                wrapper.style.width = "92%";
+                wrapper.style.width = "94%";
             } else {
-                // Desktop / Large Monitors Screen configurations
                 wrapper.style.width = "100%";
             }
         }
 
-        // Listen for layout changes across device flips or window dragging actions
         window.addEventListener('resize', handleDynamicDeviceResize);
         window.addEventListener('orientationchange', handleDynamicDeviceResize);
     </script>
