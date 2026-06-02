@@ -174,9 +174,10 @@ def generate_arcade():
             background-color: #050505;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             
-            /* Physically restricts the arcade viewport box from extending past the laptop screen display boundaries */
+            /* Enforces proportional dimensions based on the screen limits */
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
+            aspect-ratio: 16 / 9;
             overflow: hidden; 
             display: flex;
             justify-content: center;
@@ -184,17 +185,13 @@ def generate_arcade():
         }}
 
         iframe {{
+            width: 100% !important;
+            height: 100% !important;
             border: none !important;
             display: block !important;
             position: absolute;
             top: 0;
             left: 0;
-            
-            /* Hardcode the layout rules inside the frame to a 10-inch ultra-compact baseline screen space */
-            width: 1024px !important;
-            height: 576px !important;
-            
-            transform-origin: top left;
         }}
     </style>
 </head>
@@ -226,36 +223,15 @@ def generate_arcade():
         const iframe = document.getElementById('arcade-processor');
         const wrapper = document.getElementById('game-frame-wrapper');
 
-        function handleResponsiveUpscaling() {{
-            const rect = wrapper.getBoundingClientRect();
-            
-            // Baseline 10-inch portable display virtual specifications
-            const virtualW = 1024;
-            const virtualH = 576;
-            
-            // Compute real-time magnification factors
-            const zoomFactorX = rect.width / virtualW;
-            const zoomFactorY = rect.height / virtualH;
-            
-            // Choose the more restrictive edge to safely maintain the aspect ratio constraints
-            const cleanMultiplier = Math.min(zoomFactorX, zoomFactorY);
-            
-            // Apply a direct cross-browser zoom and structural matrix transform combo
-            iframe.style.transform = 'scale(' + cleanMultiplier + ')';
-            
-            // Centering algorithm calculation to make sure letterboxing balances evenly on big monitors
-            const computedLeftOffset = (rect.width - (virtualW * cleanMultiplier)) / 2;
-            const computedTopOffset = (rect.height - (virtualH * cleanMultiplier)) / 2;
-            
-            iframe.style.left = computedLeftOffset + 'px';
-            iframe.style.top = computedTopOffset + 'px';
-
-            // Send standard canvas layout initialization coordinates directly to the frame
+        function sendResizeToGame() {{
             if (iframe.contentWindow) {{
+                const rect = wrapper.getBoundingClientRect();
+                
+                // Directly pass real-world fluid constraints to the frame viewport
                 iframe.contentWindow.postMessage({{
                     type: 'ARCADE_RESIZE_COMMAND',
-                    width: virtualW,
-                    height: virtualH
+                    width: Math.floor(rect.width),
+                    height: Math.floor(rect.height)
                 }}, '*');
             }}
         }}
@@ -266,8 +242,7 @@ def generate_arcade():
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            // Stabilize layout matrices before sending device configuration metrics
-            setTimeout(handleResponsiveUpscaling, 60);
+            setTimeout(sendResizeToGame, 60);
         }}
 
         function showBrowseView() {{
@@ -277,8 +252,8 @@ def generate_arcade():
             browseView.style.display = 'grid';
         }}
 
-        window.addEventListener('resize', handleResponsiveUpscaling);
-        iframe.addEventListener('load', handleResponsiveUpscaling);
+        window.addEventListener('resize', sendResizeToGame);
+        iframe.addEventListener('load', sendResizeToGame);
     </script>
 
 </body>
