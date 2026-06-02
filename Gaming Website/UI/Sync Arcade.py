@@ -29,6 +29,11 @@ def generate_arcade():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
     <title>Tinker Tech Guy's Arcade</title>
     <style>
         :root {{
@@ -168,8 +173,6 @@ def generate_arcade():
             position: relative;
             background-color: #050505;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            
-            /* Dynamically locks the outer framing bounds to never exceed screen sizes */
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
             overflow: hidden; 
@@ -179,11 +182,8 @@ def generate_arcade():
             position: absolute;
             top: 0;
             left: 0;
-            
-            /* Hardcodes the inner environment to an ideal HD display layout baseline */
             width: 1920px !important;
             height: 1080px !important;
-            
             border: none !important;
             display: block !important;
             transform-origin: top left;
@@ -224,17 +224,13 @@ def generate_arcade():
             const nativeHDW = 1920;
             const nativeHDH = 1080;
             
-            // Map the scaling ratios
             const scaleRatioX = rect.width / nativeHDW;
             const scaleRatioY = rect.height / nativeHDH;
             
-            // Math.min forces the game to shrink into the smaller container bounds on laptop screens
             const structuralMultiplier = Math.min(scaleRatioX, scaleRatioY);
             
-            // Hardware accelerated vector transform scale handles pixel density translation natively
             iframe.style.transform = 'scale(' + structuralMultiplier + ')';
             
-            // Keeps the game centered in the screen box
             const centeringLeft = (rect.width - (nativeHDW * structuralMultiplier)) / 2;
             const centeringTop = (rect.height - (nativeHDH * structuralMultiplier)) / 2;
             
@@ -243,7 +239,9 @@ def generate_arcade():
         }}
 
         function launchGame(gameFilePath) {{
-            iframe.src = gameFilePath;
+            // Append a dynamic cache-busting timestamp string onto the game URL
+            iframe.src = gameFilePath + '?t=' + new Date().getTime();
+            
             browseView.style.display = 'none';
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
@@ -269,7 +267,7 @@ def generate_arcade():
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! index.html updated with universal resolution scaling layout matrix.")
+    print(f"Arcade sync successful! Added cache-busting headers to index.html.")
 
 if __name__ == '__main__':
     generate_arcade()
