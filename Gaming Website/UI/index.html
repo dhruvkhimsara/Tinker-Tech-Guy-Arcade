@@ -121,28 +121,33 @@
             text-align: center;
         }
 
-        /* --- REDESIGNED AUTOMATIC MASTER SIZING LAYER --- */
+        /* --- NEW REDESIGNED DEVICE-ADAPTIVE VIEWPORT --- */
         #play-view {
             display: none;
             width: 100%;
             height: 100%;
             background-color: #000000;
-            position: relative;
-            overflow: hidden; /* Hides internal scale bleeding margins */
+            box-sizing: border-box;
+            
+            /* This is the padding zone directly underneath the top bar. 
+               It acts as a flexible cushion that forces the game content to 
+               perfectly center itself vertically and horizontally. */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; 
         }
 
-        /* This element acts as a fixed high-resolution target (1920x1080).
-           Every game will launch inside this massive playground, meaning internal canvas 
-           or layout elements will never collapse or look cramped. 
-        */
-        #game-scaler-canvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 1920px;
-            height: 1080px;
-            transform-origin: center center;
-            transform: translate(-50%, -50%) scale(1);
+        /* This wrapper reads device limits dynamically and constrains the iframe */
+        #game-frame-wrapper {
+            width: 100%;
+            height: 100%;
+            /* Forces a strict 16:9 arcade aspect ratio layout on widescreen environments */
+            aspect-ratio: 16 / 9; 
+            max-width: 100%;
+            max-height: 100%;
+            background-color: #050505;
+            box-sizing: border-box;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -153,7 +158,19 @@
             height: 100% !important;
             border: none !important;
             display: block !important;
-            background-color: #000000;
+        }
+
+        /* --- MOBILE DEVICE SIZING LOGIC EXTRA ---
+           If the player is on a tall screen device (like a portrait phone), 
+           reconfigure layout spacing rules so games don't squish down excessively. */
+        @media (max-aspect-ratio: 1/1) {
+            #play-view {
+                padding: 10px 5px; /* Tighter safety padding for narrow portrait screens */
+            }
+            #game-frame-wrapper {
+                aspect-ratio: auto; /* Relaxes strict landscape restrictions for better mobile fit */
+                height: 60vh;       /* Limits fallback height bounds on mobile browsers */
+            }
         }
     </style>
 </head>
@@ -170,28 +187,34 @@
             <div class="game-card" onclick="launchGame('Games/Dino.html')">
                 <div class="game-title">Dino</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Highway Racer.html')">
                 <div class="game-title">Highway Racer</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Idle Breakout.html')">
                 <div class="game-title">Idle Breakout</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Pong.html')">
                 <div class="game-title">Pong</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Slither.io.html')">
                 <div class="game-title">Slither.io</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Snake.html')">
                 <div class="game-title">Snake</div>
             </div>
+
             <div class="game-card" onclick="launchGame('Games/Space Shooter.html')">
                 <div class="game-title">Space Shooter</div>
             </div>
         </div>
 
         <div id="play-view">
-            <div id="game-scaler-canvas">
+            <div id="game-frame-wrapper">
                 <iframe id="arcade-processor" src=""></iframe>
             </div>
         </div>
@@ -203,39 +226,17 @@
         const playView = document.getElementById('play-view');
         const backBtn = document.getElementById('back-home-btn');
         const iframe = document.getElementById('arcade-processor');
-        const scalerCanvas = document.getElementById('game-scaler-canvas');
-
-        // --- CORE CALCULATOR MECHANISM ---
-        function executeMasterScaleCalculation() {
-            if (playView.style.display !== 'block') return;
-
-            // Ideal aspect boundary base values 
-            const baseWidth = 1920;
-            const baseHeight = 1080;
-
-            // Read the hardware viewport directly minus your 70px layout header
-            const currentWindowWidth = window.innerWidth;
-            const currentWindowHeight = window.innerHeight - 70;
-
-            // Figure out the independent horizontal and vertical scale ratios
-            const ratioX = currentWindowWidth / baseWidth;
-            const ratioY = currentWindowHeight / baseHeight;
-
-            // Pick the limiting dimension factor so games never bleed out or clip the viewport edges
-            const strictScaleFactor = Math.min(ratioX, ratioY);
-
-            // Execute hardware-accelerated 2D transforms directly from the top container level
-            scalerCanvas.style.transform = `translate(-50%, -50%) scale(${strictScaleFactor})`;
-        }
 
         function launchGame(gameFilePath) {
             iframe.src = gameFilePath;
             browseView.style.display = 'none';
-            playView.style.display = 'block';
+            
+            // Adjust Display Mode using dynamic CSS layout rules
+            playView.style.display = 'flex'; 
             backBtn.style.display = 'block';
             
-            // Allow a microscopic window buffer gap for initial DOM paint updates before freezing matrix scale
-            setTimeout(executeMasterScaleCalculation, 15);
+            // Force rendering refresh pass on device dimension load configurations
+            handleDynamicDeviceResize();
         }
 
         function showBrowseView() {
@@ -245,8 +246,32 @@
             browseView.style.display = 'grid';
         }
 
-        // Listen for layout size adjustments globally without ever invoking individual scripts inside the iframe
-        window.addEventListener('resize', executeMasterScaleCalculation);
+        // --- AUTOMATIC DEVICE RESIZE SENSOR ---
+        function handleDynamicDeviceResize() {
+            if (playView.style.display !== 'flex') return;
+
+            // Detect current window frame measurements
+            const currentWidth = window.innerWidth;
+            const currentHeight = window.innerHeight - 70; // Header offset accounts
+            
+            const wrapper = document.getElementById('game-frame-wrapper');
+
+            // Responsive Layout Rules Engine
+            if (currentWidth < 768) {
+                // Mobile View Optimization parameters
+                wrapper.style.width = "96%";
+            } else if (currentWidth >= 768 && currentWidth <= 1024) {
+                // Tablet View Optimization parameters
+                wrapper.style.width = "92%";
+            } else {
+                // Desktop / Large Monitors Screen configurations
+                wrapper.style.width = "100%";
+            }
+        }
+
+        // Listen for layout changes across device flips or window dragging actions
+        window.addEventListener('resize', handleDynamicDeviceResize);
+        window.addEventListener('orientationchange', handleDynamicDeviceResize);
     </script>
 
 </body>
