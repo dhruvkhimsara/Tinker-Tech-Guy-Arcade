@@ -1,23 +1,19 @@
 import os
 
-# Define the exact absolute paths relative to this script's location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GAMES_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'Games'))
 INDEX_FILE = os.path.join(SCRIPT_DIR, 'index.html')
 
 def generate_arcade():
-    # 1. Scan the Games directory for all valid .html game files
     if not os.path.exists(GAMES_DIR):
         print(f"Error: Could not find Games folder at {GAMES_DIR}")
         return
 
     game_files = [f for f in os.listdir(GAMES_DIR) if f.endswith('.html')]
-    game_files.sort() # Keeps them in clean alphabetical order
+    game_files.sort()
 
-    # 2. Build the dynamic HTML string cards based on current files found
     card_elements = []
     for file_name in game_files:
-        # Strip the extension out to create a clean visual title string
         display_title = os.path.splitext(file_name)[0]
         relative_path = f"Games/{file_name}"
         
@@ -28,7 +24,6 @@ def generate_arcade():
 
     all_cards_string = "\n\n".join(card_elements)
 
-    # 3. Construct the completely clean index.html file layout
     full_html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -174,24 +169,24 @@ def generate_arcade():
             background-color: #050505;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             
-            /* Enforces proportional dimensions based on the screen limits */
+            /* Dynamically locks the outer framing bounds to never exceed screen sizes */
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
-            aspect-ratio: 16 / 9;
             overflow: hidden; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }}
 
         iframe {{
-            width: 100% !important;
-            height: 100% !important;
-            border: none !important;
-            display: block !important;
             position: absolute;
             top: 0;
             left: 0;
+            
+            /* Hardcodes the inner environment to an ideal HD display layout baseline */
+            width: 1920px !important;
+            height: 1080px !important;
+            
+            border: none !important;
+            display: block !important;
+            transform-origin: top left;
         }}
     </style>
 </head>
@@ -223,17 +218,28 @@ def generate_arcade():
         const iframe = document.getElementById('arcade-processor');
         const wrapper = document.getElementById('game-frame-wrapper');
 
-        function sendResizeToGame() {{
-            if (iframe.contentWindow) {{
-                const rect = wrapper.getBoundingClientRect();
-                
-                // Directly pass real-world fluid constraints to the frame viewport
-                iframe.contentWindow.postMessage({{
-                    type: 'ARCADE_RESIZE_COMMAND',
-                    width: Math.floor(rect.width),
-                    height: Math.floor(rect.height)
-                }}, '*');
-            }}
+        function performGlobalHardwareScale() {{
+            const rect = wrapper.getBoundingClientRect();
+            
+            const nativeHDW = 1920;
+            const nativeHDH = 1080;
+            
+            // Map the scaling ratios
+            const scaleRatioX = rect.width / nativeHDW;
+            const scaleRatioY = rect.height / nativeHDH;
+            
+            // Math.min forces the game to shrink into the smaller container bounds on laptop screens
+            const structuralMultiplier = Math.min(scaleRatioX, scaleRatioY);
+            
+            // Hardware accelerated vector transform scale handles pixel density translation natively
+            iframe.style.transform = 'scale(' + structuralMultiplier + ')';
+            
+            // Keeps the game centered in the screen box
+            const centeringLeft = (rect.width - (nativeHDW * structuralMultiplier)) / 2;
+            const centeringTop = (rect.height - (nativeHDH * structuralMultiplier)) / 2;
+            
+            iframe.style.left = centeringLeft + 'px';
+            iframe.style.top = centeringTop + 'px';
         }}
 
         function launchGame(gameFilePath) {{
@@ -242,7 +248,7 @@ def generate_arcade():
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            setTimeout(sendResizeToGame, 60);
+            setTimeout(performGlobalHardwareScale, 50);
         }}
 
         function showBrowseView() {{
@@ -252,19 +258,18 @@ def generate_arcade():
             browseView.style.display = 'grid';
         }}
 
-        window.addEventListener('resize', sendResizeToGame);
-        iframe.addEventListener('load', sendResizeToGame);
+        window.addEventListener('resize', performGlobalHardwareScale);
+        iframe.addEventListener('load', performGlobalHardwareScale);
     </script>
 
 </body>
 </html>
 """
 
-    # 4. Write out the final built HTML string
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Found {len(game_files)} games inside 'Gaming Website/Games'. index.html updated.")
+    print(f"Arcade sync successful! index.html updated with universal resolution scaling layout matrix.")
 
 if __name__ == '__main__':
     generate_arcade()
