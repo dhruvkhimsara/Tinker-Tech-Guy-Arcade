@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idle Breakout</title>
+    <style>
+        :root { --bg: #050505; --panel: #121212; --accent: #00ff88; --gold: #ffd700; --text: #fff; }
+        
+        /* Forces full screen environment but hides browser scrollbars completely */
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- Updated Responsive Wrapper Framework --- */
+        #game-master-wrapper {
+            width: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff; /* Clean white border completely framing the whole game stretch */
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #header { height: 70px; background: #000; display: flex; justify-content: space-around; align-items: center; border-bottom: 2px solid #222; flex-shrink: 0; }
+        .stat { text-align: center; font-weight: 600; font-size: 0.7rem; color: #666; text-transform: uppercase; width: 45%; }
+        .stat span { display: block; color: #fff; font-size: 1.1rem; }
+        #m-disp { color: var(--gold) !important; font-weight: 800; }
+        #view-container { flex: 1; position: relative; background: #000; overflow: hidden; }
+        .view { position: absolute; inset: 0; display: none; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; background: #050505; z-index: 10; }
+        .view.active { display: flex; }
+        #game-view { padding: 0; background: #000; z-index: 1; }
+        #game-area { width: 100%; height: 100%; position: relative; }
+        canvas { display: block; touch-action: none; }
+        .section-title { font-size: 0.75rem; color: #444; text-transform: uppercase; margin: 10px 0 15px; font-weight: 800; letter-spacing: 1px; }
+        .shop-item { background: var(--panel); margin-bottom: 10px; padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; border: 1px solid #222; cursor: pointer; user-select: none; }
+        .ball-icon { width: 34px; height: 34px; border-radius: 50%; margin-right: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-info b { display: block; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-info i { font-size: 0.75rem; color: #555; font-style: normal; display: block; }
+        .price-tag { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; margin-left: 10px; }
+        .price { color: var(--gold); font-weight: bold; font-size: 1rem; display: block; }
+        .status-badge { font-size: 0.65rem; color: var(--accent); font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+        #nav { height: 70px; display: flex; background: #000; border-top: 1px solid #222; flex-shrink: 0; z-index: 20; }
+        .nav-btn { flex: 1; border: none; background: none; color: #444; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .nav-btn.active { color: var(--accent); border-top: 4px solid var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="game-master-wrapper">
+        <div id="header">
+            <div class="stat">MONEY<span id="m-disp">$0</span></div>
+            <div class="stat">LEVEL<span id="l-disp">1</span></div>
+        </div>
+        <div id="view-container">
+            <div id="game-view" class="view active"><div id="game-area"><canvas id="gameCanvas"></canvas></div></div>
+            <div id="shop-view" class="view">
+                <div class="section-title">Upgrades</div>
+                <div class="shop-item" id="btn-tap-up">
+                    <div class="ball-icon" style="background:#fff; color:#000;">👆</div>
+                    <div class="item-info"><b>Tap Damage</b></div>
+                    <div class="price-tag"><span class="price" id="tap-cost">$10</span><span class="status-badge" id="tap-status">Damage: 1</span></div>
+                </div>
+                <div class="shop-item" id="btn-dmg-up">
+                    <div class="ball-icon" style="background:var(--accent); color:#000;">💥</div>
+                    <div class="item-info"><b>Ball Damage</b></div>
+                    <div class="price-tag"><span class="price" id="dmg-cost">$50</span><span class="status-badge" id="dmg-status">+0 EXTRA</span></div>
+                </div>
+                <div class="section-title">Balls</div>
+                <div id="ball-list"></div>
+            </div>
+        </div>
+        <div id="nav">
+            <button class="nav-btn active" id="nav-game" onclick="setV('game')">ARENA</button>
+            <button class="nav-btn" id="nav-shop" onclick="setV('shop')">SHOP</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let state = { m: 0, lvl: 1, tapLvl: 0, tc: 10, ballDmgLvl: 0, bdc: 50, balls: [], bricks: [], inv: {}, costs: {} };
+    let particles = [];
+
+    // Permanent reference resolution for the coordinate arena space
+    const VIRTUAL_WIDTH = 1920;
+    const VIRTUAL_HEIGHT = 940; // 1080p total height - 70px header - 70px nav
+
+    const types = {
+        starter: { n: 'Starter', d: 1, s: 5, c: '#fff', p: 25 },
+        scatter: { n: 'Scatter', d: 8, s: 5, c: '#0f8', p: 150 },
+        poison:  { n: 'Poison',  d: 35, s: 5, c: '#a0f', p: 850 },
+        lightning:{n: 'Lightning',d: 150, s: 7, c: '#0cf', p: 4200 },
+        sniper:  { n: 'Sniper',  d: 800, s: 11, c: '#f44', p: 25000 },
+        nuke:    { n: 'Nuke',    d: 5000, s: 4, c: '#ff4500', p: 125000 },
+        plasma:  { n: 'Plasma',  d: 50000, s: 8, c: '#0ff', p: 1000000, fx: 'spark' },
+        void:    { n: 'Void',    d: 500000, s: 6, c: '#444', p: 50000000, fx: 'ghost' },
+        galaxy:  { n: 'Galaxy',  d: 10000000, s: 7, c: '#60f', p: 1000000000, fx: 'star' },
+        infinity:{ n: 'Infinity',d: 250000000, s: 9, c: '#ffd700', p: 50000000000, fx: 'trail' },
+        quasar:  { n: 'Quasar',  d: 1000000000, s: 10, c: '#f0f', p: 500000000000, fx: 'spark' },
+        nova:    { n: 'Supernova',d: 5000000000, s: 6, c: '#ffa500', p: 5000000000000, fx: 'star' },
+        anti:    { n: 'Antimatter',d: 25000000000, s: 8, c: '#fff', p: 50000000000000, fx: 'ghost' },
+        ripper:  { n: 'Dimension Ripper', d: 60000000000, s: 12, c: '#ff0044', p: 500000000000000, fx: 'trail' },
+        singul:  { n: 'The Singularity', d: 100000000000, s: 5, c: '#000', p: 1000000000000000, fx: 'void' }
+    };
+
+    function fmt(n) { 
+        if (n < 1000) return Math.floor(n); 
+        let s=["","K","M","B","T","Qa","Qi","Sx"]; 
+        let e=Math.floor(Math.log10(n)/3); 
+        return (n/Math.pow(1000,e)).toFixed(1)+s[e]; 
+    }
+    
+    function calcExp(l) { return l <= 0 ? 0 : Math.floor(Math.pow(1.15, l) * 5 + l); }
+    function getTapDamage() { return 1 + calcExp(state.tapLvl); }
+    function getBallDamage(base) { return base + calcExp(state.ballDmgLvl); }
+
+    function createFx(x, y, color, type) {
+        let count = type === 'void' ? 15 : 6;
+        for(let i=0; i<count; i++) {
+            particles.push({
+                x, y, 
+                vx: (Math.random()-0.5)*8, 
+                vy: (Math.random()-0.5)*8, 
+                life: 1.0, 
+                color: type === 'void' ? '#fff' : color,
+                size: Math.random()*2 + 1
+            });
+        }
+    }
+
+    function initB(load = null) {
+        if(load) { state.bricks = load; return; }
+        state.bricks = [];
+        const cols = 6, rows = 14, gap = 8, sidePad = 288, topPad = 120;
+        const bW = (VIRTUAL_WIDTH - (sidePad * 2) - (cols - 1) * gap) / cols;
+        const bH = (VIRTUAL_HEIGHT - (topPad * 2) - (rows - 1) * gap) / rows;
+        const hp = 10 * Math.pow(state.lvl, 2.2);
+        for(let r=0; r<rows; r++) {
+            for(let c=0; c<cols; c++) {
+                state.bricks.push({ x: sidePad + c*(bW+gap), y: topPad + r*(bH+gap), w: bW, h: bH, hp, max: hp, color: `hsl(${(state.lvl*40)+(r*8)}, 80%, 60%)` });
+            }
+        }
+    }
+
+    function spawn(id, x, y) {
+        const t = types[id];
+        state.balls.push({ x: x||VIRTUAL_WIDTH/2, y: y||VIRTUAL_HEIGHT/2, r: 6, vx: (Math.random()-0.5)*t.s, vy: -t.s, type: id, d: t.d, color: t.c, fx: t.fx });
+    }
+
+    function renderShop() {
+        const list = document.getElementById('ball-list'); list.innerHTML = '';
+        Object.keys(types).forEach(id => {
+            if (!state.costs[id]) state.costs[id] = types[id].p;
+            const div = document.createElement('div'); div.className = 'shop-item';
+            div.innerHTML = `<div class="ball-icon" style="background:${types[id].c}; border: 2px solid #555"></div>
+                <div class="item-info"><b>${types[id].n}</b><i>Damage: ${fmt(getBallDamage(types[id].d))}</i></div>
+                <div class="price-tag"><span class="price">$${fmt(state.costs[id])}</span><span class="status-badge">${state.inv[id]||0}</span></div>`;
+            div.onclick = () => { if(state.m >= state.costs[id]) { state.m -= state.costs[id]; state.inv[id] = (state.inv[id]||0)+1; state.costs[id] *= 1.8; spawn(id); renderShop(); updateHeader(); } };
+            list.appendChild(div);
+        });
+        document.getElementById('tap-status').innerText = "Damage: " + fmt(getTapDamage());
+        document.getElementById('tap-cost').innerText = "$" + fmt(state.tc);
+        document.getElementById('dmg-status').innerText = "+" + fmt(calcExp(state.ballDmgLvl)) + " EXTRA";
+        document.getElementById('dmg-cost').innerText = "$" + fmt(state.bdc);
+    }
+
+    function update() {
+        state.balls.forEach(b => {
+            b.x += b.vx; b.y += b.vy;
+            if(b.x < b.r) { b.x = b.r; b.vx *= -1; }
+            if(b.x > VIRTUAL_WIDTH-b.r) { b.x = VIRTUAL_WIDTH-b.r; b.vx *= -1; }
+            if(b.y < b.r) { b.y = b.r; b.vy *= -1; }
+            if(b.y > VIRTUAL_HEIGHT-b.r) { b.y = VIRTUAL_HEIGHT-b.r; b.vy *= -1; }
+
+            state.bricks.forEach(br => {
+                if(br.hp > 0) {
+                    if(b.x+b.r > br.x && b.x-b.r < br.x+br.w && b.y+b.r > br.y && b.y-b.r < br.y+br.h) {
+                        let overlapX = Math.min(b.x + b.r - br.x, br.x + br.w - (b.x - b.r));
+                        let overlapY = Math.min(b.y + b.r - br.y, br.y + br.h - (b.y - b.r));
+                        if (overlapX < overlapY) {
+                            b.vx *= -1;
+                            b.x += (b.vx > 0 ? overlapX : -overlapX);
+                        } else {
+                            b.vy *= -1;
+                            b.y += (b.vy > 0 ? overlapY : -overlapY);
+                        }
+                        let damageValue = getBallDamage(b.d);
+                        br.hp -= damageValue;
+                        state.m += damageValue;
+                        if(b.fx) createFx(b.x, b.y, b.color, b.fx);
+                        if(br.hp <= 0) {
+                            br.hp = 0;
+                            if(state.bricks.every(x => x.hp <= 0)) { state.lvl++; initB(); }
+                        }
+                        updateHeader();
+                    }
+                }
+            });
+        });
+        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) particles.splice(i, 1); });
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        
+        ctx.save();
+        // Dynamic Matrix Scale Transformations Mapping Virtual Layout space to Display Resolution
+        let scaleX = canvas.width / VIRTUAL_WIDTH;
+        let scaleY = canvas.height / VIRTUAL_HEIGHT;
+        ctx.scale(scaleX, scaleY);
+
+        state.bricks.forEach(b => {
+            if(b.hp > 0) {
+                ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 8); ctx.fill();
+                ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+                ctx.fillText(fmt(b.hp), b.x+b.w/2, b.y+b.h/2+4);
+            }
+        });
+        state.balls.forEach(b => {
+            if(b.type === 'singul') { ctx.shadowBlur = 15; ctx.shadowColor = "#fff"; }
+            ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+        particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+        
+        ctx.restore();
+    }
+
+    function save() {
+        const data = { ...state, balls: state.balls.map(b => ({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, type: b.type })) };
+        localStorage.setItem('ib_save_final', btoa(JSON.stringify(data)));
+    }
+
+    canvas.onpointerdown = (e) => {
+        const rect = canvas.getBoundingClientRect(); 
+        // Translate display click positions exactly into the virtual matrix grid domain space
+        const x = (e.clientX - rect.left) * (VIRTUAL_WIDTH / rect.width);
+        const y = (e.clientY - rect.top) * (VIRTUAL_HEIGHT / rect.height);
+        const d = getTapDamage();
+        state.bricks.forEach(b => { 
+            if(b.hp > 0 && x > b.x && x < b.x+b.w && y > b.y && y < b.y+b.h) { 
+                b.hp -= d; 
+                state.m += d; 
+                if(b.hp <= 0) {
+                    b.hp = 0;
+                    if(state.bricks.every(x => x.hp <= 0)) { state.lvl++; initB(); }
+                }
+                updateHeader(); 
+            } 
+        });
+    };
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+    
+    function resize() { 
+        canvas.width = canvas.parentElement.clientWidth; 
+        canvas.height = canvas.parentElement.clientHeight; 
+    }
+    
+    function updateHeader() { document.getElementById('m-disp').innerText = "$" + fmt(state.m); document.getElementById('l-disp').innerText = state.lvl; }
+    
+    function setV(v) { 
+        document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+        document.getElementById(v + '-view').classList.add('active');
+        document.getElementById('nav-' + v).classList.add('active');
+        if(v === 'game') resize(); else renderShop();
+    }
+
+    window.onload = () => {
+        resize(); 
+        initB(); // Ensure a clean baseline matrix is generated on virtual scales first
+        const saved = localStorage.getItem('ib_save_final');
+        if(saved) {
+            try {
+                const d = JSON.parse(atob(saved)); Object.assign(state, d);
+                state.balls = []; initB(d.bricks); d.balls.forEach(b => spawn(b.type, b.x, b.y));
+            } catch(e) {}
+        }
+        updateHeader(); 
+        loop(); 
+        setInterval(save, 5000);
+    };
+    
+    document.getElementById('btn-tap-up').onclick = () => { if(state.m >= state.tc) { state.m -= state.tc; state.tapLvl++; state.tc *= 1.6; renderShop(); updateHeader(); } };
+    document.getElementById('btn-dmg-up').onclick = () => { if(state.m >= state.bdc) { state.m -= state.bdc; state.ballDmgLvl++; state.bdc *= 1.7; renderShop(); updateHeader(); } };
+
+    // --- ARCADE ARCHITECTURE BRIDGE ---
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'ARCADE_RESIZE_COMMAND') {
+            const targetWidth = event.data.width;
+            const targetHeight = event.data.height;
+
+            // Force the root container inside the game to obey the wrapper limits
+            const wrapper = document.getElementById('game-wrapper');
+            if (wrapper) {
+                wrapper.style.width = targetWidth + 'px';
+                wrapper.style.height = targetHeight + 'px';
+            }
+
+            // Re-align internal canvas engines if the specific game requires it
+            if (typeof initPositions === 'function') initPositions();
+            if (typeof initArena === 'function') initArena();
+        }
+    });
+</script>
+</body>
+</html>

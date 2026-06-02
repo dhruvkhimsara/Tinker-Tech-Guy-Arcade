@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino</title>
+    <style>
+        :root {
+            --bg-black: #050505;
+            --accent-green: #00ff88;
+            --panel-grey: #141416;
+            --text-muted: #a1a1aa;
+            --border-color: #27272a;
+        }
+
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- Updated Responsive Wrapper --- */
+        #game-wrapper {
+            width: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: var(--bg-black);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #game-header {
+            height: 90px;
+            background-color: var(--panel-grey);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .score-box {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .score-box span {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-left: 8px;
+        }
+
+        #hi-score-val {
+            color: var(--accent-green) !important;
+        }
+
+        #menu-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        #menu-overlay h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin: 0 0 15px 0;
+            letter-spacing: 3px;
+        }
+
+        #menu-overlay p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent-green);
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 700;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+
+        #canvas-container {
+            flex: 1;
+            background-color: var(--bg-black);
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            background-color: var(--bg-black);
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        
+        <div id="game-header">
+            <div class="score-box">HI-SCORE<span id="hi-score-val">0</span></div>
+            <div class="score-box">SCORE<span id="score-val">0</span></div>
+        </div>
+
+        <div id="canvas-container">
+            <div id="menu-overlay">
+                <h1 id="main-title">DINO</h1>
+                <p id="sub-title">Press SPACE, W, UP or TAP to start</p>
+            </div>
+            <canvas id="dinoCanvas"></canvas>
+        </div>
+
+    </div>
+
+<script>
+    const canvas = document.getElementById('dinoCanvas');
+    const ctx = canvas.getContext('2d');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const mainTitle = document.getElementById('main-title');
+    const subTitle = document.getElementById('sub-title');
+    const scoreVal = document.getElementById('score-val');
+    const hiScoreVal = document.getElementById('hi-score-val');
+
+    let gameActive = false;
+    let isGameOver = false;
+    let score = 0;
+    let highScore = 0;
+    
+    const initialSpeed = 11;
+    let gameSpeed = initialSpeed;
+
+    let obstacles = [];
+    let obstacleTimer = 0;
+
+    const runner = {
+        x: 150,
+        y: 0,
+        w: 60,
+        h: 65,
+        vy: 0,
+        baseJumpForce: -24.5, 
+        baseGravity: 1.25,     
+        isJumping: false,
+        groundY: 0,
+        legFrame: 0,
+        frameTimer: 0
+    };
+
+    function initCanvasSize() {
+        canvas.width = 1918;
+        canvas.height = 986;
+        runner.groundY = canvas.height - 150;
+        runner.y = runner.groundY;
+    }
+
+    function loadHighScore() {
+        const saved = localStorage.getItem('arc_dino_highscore');
+        if (saved) {
+            highScore = parseInt(saved, 10);
+            hiScoreVal.innerText = highScore;
+        }
+    }
+
+    function saveHighScore() {
+        if (score > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('arc_dino_highscore', highScore);
+            hiScoreVal.innerText = highScore;
+        }
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space' || e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            triggerJumpAction();
+        }
+    });
+
+    canvas.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        triggerJumpAction();
+    });
+
+    function triggerJumpAction() {
+        if (!gameActive && !isGameOver) {
+            gameActive = true;
+            menuOverlay.style.display = 'none';
+        } else if (isGameOver) {
+            restartGame();
+        } else if (!runner.isJumping) {
+            let speedScale = gameSpeed / initialSpeed;
+            runner.vy = runner.baseJumpForce * Math.sqrt(speedScale);
+            runner.isJumping = true;
+        }
+    }
+
+    function restartGame() {
+        score = 0;
+        gameSpeed = initialSpeed;
+        obstacles = [];
+        obstacleTimer = 0;
+        runner.y = runner.groundY;
+        runner.vy = 0;
+        runner.isJumping = false;
+        isGameOver = false;
+        gameActive = true;
+        menuOverlay.style.display = 'none';
+    }
+
+    function triggerCrashState() {
+        gameActive = false;
+        isGameOver = true;
+        saveHighScore();
+        mainTitle.innerText = "GAME OVER";
+        subTitle.innerText = "PRESS ANY JUMP KEY TO RESTART";
+        menuOverlay.style.display = 'block';
+    }
+
+    function spawnObstacle() {
+        const rand = Math.random();
+        let obsW, obsH, obsType;
+
+        if (rand < 0.4) {
+            obsW = 28; obsH = 65; obsType = 'cactus-single';
+        } else if (rand < 0.75) {
+            obsW = 55; obsH = 70; obsType = 'cactus-double';
+        } else {
+            obsW = 65; obsH = 48; obsType = 'cactus-triple';
+        }
+
+        let obsY = runner.groundY + (runner.h - obsH);
+        obstacles.push({ x: canvas.width, y: obsY, w: obsW, h: obsH, type: obsType });
+    }
+
+    function updateSimulation() {
+        if (!gameActive) return;
+
+        score += 0.15;
+        scoreVal.innerText = Math.floor(score);
+        
+        gameSpeed += 0.002;
+
+        let speedScale = gameSpeed / initialSpeed;
+        let currentGravity = runner.baseGravity * speedScale;
+
+        runner.y += runner.vy;
+        runner.vy += currentGravity;
+
+        if (runner.y >= runner.groundY) {
+            runner.y = runner.groundY;
+            runner.vy = 0;
+            runner.isJumping = false;
+        }
+
+        runner.frameTimer += (gameSpeed / initialSpeed);
+        if (runner.frameTimer > 6) {
+            runner.legFrame = runner.legFrame === 0 ? 1 : 0;
+            runner.frameTimer = 0;
+        }
+
+        obstacleTimer--;
+        if (obstacleTimer <= 0) {
+            spawnObstacle();
+            obstacleTimer = Math.random() * 50 + Math.max(30, 110 - (gameSpeed * 2));
+        }
+
+        obstacles.forEach((obs, index) => {
+            obs.x -= gameSpeed;
+
+            if (
+                runner.x + 8 < obs.x + obs.w &&
+                runner.x + runner.w - 8 > obs.x &&
+                runner.y + 4 < obs.y + obs.h &&
+                runner.y + runner.h > obs.y
+            ) {
+                triggerCrashState();
+            }
+
+            if (obs.x + obs.w < 0) {
+                obstacles.splice(index, 1);
+            }
+        });
+    }
+
+    function drawDino(ctx, x, y, w, h, legFrame, isJumping) {
+        ctx.fillStyle = '#ffffff';
+        
+        ctx.fillRect(x + 10, y + 16, 32, 28); 
+        ctx.fillRect(x, y + 22, 10, 14);     
+        ctx.fillRect(x + 2, y + 18, 8, 10);
+        
+        ctx.fillRect(x + 28, y, 26, 18);     
+        ctx.fillRect(x + 34, y + 16, 12, 14); 
+        ctx.fillRect(x + 28, y + 6, 28, 12);  
+        
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(x + 34, y + 4, 4, 4);
+        ctx.fillStyle = '#ffffff';
+
+        ctx.fillRect(x + 44, y + 24, 8, 4);
+        ctx.fillRect(x + 48, y + 28, 4, 4);
+
+        if (isJumping) {
+            ctx.fillRect(x + 14, y + 44, 6, 12);
+            ctx.fillRect(x + 28, y + 44, 6, 12);
+            ctx.fillRect(x + 14, y + 54, 10, 4);
+            ctx.fillRect(x + 28, y + 54, 10, 4);
+        } else if (legFrame === 0) {
+            ctx.fillRect(x + 14, y + 44, 6, 16);
+            ctx.fillRect(x + 14, y + 58, 10, 4); 
+            
+            ctx.fillRect(x + 28, y + 44, 6, 8);
+            ctx.fillRect(x + 32, y + 50, 6, 4);
+        } else {
+            ctx.fillRect(x + 14, y + 44, 6, 8);
+            ctx.fillRect(x + 12, y + 50, 6, 4);
+            
+            ctx.fillRect(x + 28, y + 44, 6, 16);
+            ctx.fillRect(x + 28, y + 58, 10, 4); 
+        }
+    }
+
+    function drawCactus(ctx, obs) {
+        ctx.fillStyle = '#00ff88';
+        
+        if (obs.type === 'cactus-single') {
+            ctx.fillRect(obs.x + 10, obs.y, 8, obs.h);
+            ctx.fillRect(obs.x, obs.y + 18, 10, 6);
+            ctx.fillRect(obs.x, obs.y + 8, 6, 12);
+            ctx.fillRect(obs.x + 18, obs.y + 26, 10, 6);
+            ctx.fillRect(obs.x + 22, obs.y + 16, 6, 12);
+        } else if (obs.type === 'cactus-double') {
+            ctx.fillRect(obs.x + 36, obs.y, 10, obs.h);
+            ctx.fillRect(obs.x + 24, obs.y + 22, 14, 6);
+            ctx.fillRect(obs.x + 24, obs.y + 12, 6, 12);
+            ctx.fillRect(obs.x + 44, obs.y + 28, 10, 6);
+            ctx.fillRect(obs.x + 48, obs.y + 16, 6, 14);
+
+            ctx.fillRect(obs.x + 10, obs.y + 15, 8, obs.h - 15);
+            ctx.fillRect(obs.x, obs.y + 30, 10, 5);
+            ctx.fillRect(obs.x, obs.y + 22, 5, 10);
+        } else if (obs.type === 'cactus-triple') {
+            ctx.fillRect(obs.x + 6, obs.y + 14, 6, obs.h - 14);
+            ctx.fillRect(obs.x + 26, obs.y, 8, obs.h);
+            ctx.fillRect(obs.x + 16, obs.y + 20, 12, 5);
+            ctx.fillRect(obs.x + 16, obs.y + 10, 5, 12);
+            ctx.fillRect(obs.x + 48, obs.y + 8, 8, obs.h - 8);
+            ctx.fillRect(obs.x + 40, obs.y + 24, 10, 5);
+            ctx.fillRect(obs.x + 40, obs.y + 16, 5, 10);
+        }
+    }
+
+    function drawScreen() {
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#27272a';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 12]);
+        ctx.beginPath();
+        ctx.moveTo(0, runner.groundY + runner.h - 4);
+        ctx.lineTo(canvas.width, runner.groundY + runner.h - 4);
+        ctx.stroke();
+        ctx.setLineDash([]); 
+
+        drawDino(ctx, runner.x, runner.y, runner.w, runner.h, runner.legFrame, runner.isJumping);
+
+        obstacles.forEach(obs => {
+            drawCactus(ctx, obs);
+        });
+    }
+
+    function loop() {
+        updateSimulation();
+        drawScreen();
+        requestAnimationFrame(loop);
+    }
+
+    window.onload = () => {
+        initCanvasSize();
+        loadHighScore();
+        loop();
+    };
+
+    // --- ARCADE ARCHITECTURE BRIDGE ---
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'ARCADE_RESIZE_COMMAND') {
+            const targetWidth = event.data.width;
+            const targetHeight = event.data.height;
+
+            // Force the root container inside the game to obey the wrapper limits
+            const wrapper = document.getElementById('game-wrapper');
+            if (wrapper) {
+                wrapper.style.width = targetWidth + 'px';
+                wrapper.style.height = targetHeight + 'px';
+            }
+
+            // Re-align internal canvas engines if the specific game requires it
+            if (typeof initPositions === 'function') initPositions();
+            if (typeof initArena === 'function') initArena();
+        }
+    });
+</script>
+</body>
+</html>
