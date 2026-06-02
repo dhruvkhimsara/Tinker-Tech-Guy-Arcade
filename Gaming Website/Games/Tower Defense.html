@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Defense</title>
+    <style>
+        :root { 
+            --background: #050505; 
+            --panel: #121212; 
+            --accent: #28c840; 
+            --gold: #ffd700; 
+            --text: #fff; 
+            --danger: #ef4444;
+            --path: #b25329;
+        }
+        
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #game-master-wrapper {
+            width: min(100vw, calc(100vh * 16 / 9));
+            height: min(100vh, calc(100vw * 9 / 16));
+            background-color: var(--background);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #header { height: 70px; background: #000; display: flex; justify-content: space-around; align-items: center; border-bottom: 2px solid #222; flex-shrink: 0; }
+        .stat { text-align: center; font-weight: 600; font-size: 0.85rem; color: #aaa; text-transform: uppercase; width: 22%; }
+        .stat span { display: block; color: #fff; font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #money-display { color: var(--gold) !important; }
+        #lives-display { color: var(--danger) !important; }
+        #damage-boost-display { color: var(--accent) !important; }
+
+        #view-container { flex: 1; position: relative; background: #000; }
+        .view { position: absolute; inset: 0; display: none; flex-direction: column; box-sizing: border-box; background: var(--background); z-index: 10; overflow-y: auto; }
+        .view.active { display: flex; }
+        
+        #game-view { padding: 0; background: #28c840; z-index: 1; overflow: hidden; position: relative;}
+        canvas { display: block; touch-action: none; cursor: crosshair; background: #28c840; width: 100%; height: 100%; }
+
+        #shop-view { padding: 30px 60px; }
+        .shop-row { margin-bottom: 25px; }
+        .section-title { font-size: 1.1rem; color: #888; text-transform: uppercase; margin: 10px 0 15px; font-weight: 800; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        
+        .shop-item { background: var(--panel); padding: 15px; border-radius: 12px; display: flex; align-items: center; border: 2px solid #222; cursor: pointer; user-select: none; transition: all 0.2s; }
+        .shop-item:hover { border-color: var(--accent); background: #1a1a1a; }
+        .shop-item.selected { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); background: #1a1a1a; }
+        
+        .ball-icon { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #2a2a2a; border: 2px solid #444; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-info b { display: block; font-size: 1.1rem; color: #fff; margin-bottom: 3px;}
+        .item-info i { font-size: 0.8rem; color: #aaa; font-style: normal; display: block; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-info .damage-stat { font-size: 0.85rem; color: #f43f5e; font-weight: bold; margin-top: 3px; display: block; }
+        
+        .price-tag { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; margin-left: 10px; }
+        .price { color: var(--gold); font-weight: 900; font-size: 1.25rem; display: block; margin-bottom: 4px; }
+        .count-badge { font-size: 0.85rem; color: #22c55e; font-weight: bold; margin-top: 4px; }
+
+        #navigation { height: 70px; display: flex; background: #000; border-top: 1px solid #222; flex-shrink: 0; z-index: 20; }
+        .navigation-button { flex: 1; border: none; background: none; color: #666; font-weight: 900; cursor: pointer; font-size: 1.1rem; letter-spacing: 2px; }
+        .navigation-button.active { color: var(--accent); border-top: 5px solid var(--accent); background: rgba(40, 200, 64, 0.05); }
+
+        #modal-container-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+        #upgrade-modal { background: #121212; border: 2px solid var(--gold); padding: 30px; border-radius: 16px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 340px; }
+        .modal-title { color: #fff; font-size: 1.4rem; font-weight: 800; text-align: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin: 0; }
+        .modal-button { background: #222; border: 1px solid #444; color: #fff; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        .modal-button.upgrade { border-color: var(--accent); color: var(--accent); }
+        .modal-button.upgrade:hover { background: rgba(40, 200, 64, 0.1); }
+        .modal-button.sell { border-color: var(--danger); color: var(--danger); }
+        .modal-button.sell:hover { background: rgba(239, 68, 68, 0.1); }
+        .modal-button.dismiss { border-color: #666; color: #aaa; margin-top: 5px; }
+        .modal-button.dismiss:hover { background: rgba(255,255,255,0.05); }
+
+        #placement-confirmation-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(18, 18, 18, 0.95); border: 2px solid var(--accent); padding: 15px 30px; border-radius: 12px; display: none; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 40; align-items: center; }
+        .confirmation-text { font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px; margin-right: 10px; }
+        .action-button { border: none; padding: 10px 24px; font-weight: 900; font-size: 1rem; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+        .action-button.confirm { background: var(--accent); color: #000; }
+        .action-button.confirm:hover { background: #1fa233; }
+        .action-button.cancel { background: var(--danger); color: #fff; }
+        .action-button.cancel:hover { background: #dc2626; }
+
+        #wave-start-button { position: absolute; bottom: 30px; right: 30px; background: #000; color: var(--accent); border: 2px solid var(--accent); padding: 15px 30px; border-radius: 8px; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 30; text-transform: uppercase; letter-spacing: 1px; }
+        #wave-start-button:hover { background: #111; transform: translateY(-2px); }
+
+        #fullscreen-message { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 150; }
+        #fullscreen-message h1 { font-size: 5rem; font-weight: 900; margin: 0 0 20px; letter-spacing: 4px; text-transform: uppercase; }
+        #fullscreen-message p { font-size: 1.5rem; color: #aaa; margin-bottom: 40px; }
+        #fullscreen-message button { background: var(--gold); color: #000; font-size: 1.5rem; font-weight: bold; padding: 20px 50px; border: none; border-radius: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="game-master-wrapper">
+        <div id="header">
+            <div class="stat">GOLD<span id="money-display">$100</span></div>
+            <div class="stat">DAMAGE BOOST<span id="damage-boost-display">x1.0</span></div>
+            <div class="stat">WAVE<span id="wave-display">1 / 100</span></div>
+            <div class="stat">LIVES<span id="lives-display">100</span></div>
+        </div>
+
+        <div id="view-container">
+            <div id="game-view" class="view active">
+                <canvas id="gameCanvas" width="1920" height="940"></canvas>
+                
+                <div id="modal-container-overlay">
+                    <div id="upgrade-modal">
+                        <h3 class="modal-title" id="upgrade-modal-title">Fighter Level 1</h3>
+                        <button class="modal-button upgrade" id="upgrade-modal-button">Upgrade ($100)</button>
+                        <button class="modal-button sell" id="upgrade-modal-sell">Scrap ($25)</button>
+                        <button class="modal-button dismiss" onclick="closeCenteredModal()">Close Menu</button>
+                    </div>
+                </div>
+
+                <div id="placement-confirmation-bar">
+                    <span class="confirmation-text" id="placement-status-text">Confirm placement?</span>
+                    <button class="action-button confirm" onclick="finalizePlacementConfirm()">Confirm</button>
+                    <button class="action-button cancel" onclick="cancelActivePlacement()">Cancel</button>
+                </div>
+
+                <button id="wave-start-button" onclick="startNextWave()">Launch Wave</button>
+            </div>
+            
+            <div id="shop-view" class="view">
+                <div class="shop-row">
+                    <div class="section-title">Global Progression Enhancers</div>
+                    <div class="shop-grid" id="global-grid"></div>
+                </div>
+                <div class="shop-row">
+                    <div class="section-title">Tier 1 Defenders</div>
+                    <div class="shop-grid" id="tier1-grid"></div>
+                </div>
+                <div class="shop-row">
+                    <div class="section-title">Tier 2 Defenders</div>
+                    <div class="shop-grid" id="tier2-grid"></div>
+                </div>
+                <div class="shop-row">
+                    <div class="section-title">Tier 3 Defenders</div>
+                    <div class="shop-grid" id="tier3-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="navigation">
+            <button class="navigation-button active" id="navigation-game" onclick="setView('game')">BATTLEFIELD</button>
+            <button class="navigation-button" id="navigation-shop" onclick="setView('shop')">SHOP</button>
+        </div>
+
+        <div id="fullscreen-message">
+            <h1 id="message-title">GAME OVER</h1>
+            <p id="message-subtitle">The realm has fallen.</p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+<script>
+    // --- Canvas Setup ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const GRID = 80;
+    const PATH_WIDTH = 65;
+
+    // Fixed path layout
+    const PATH_NODES = [
+        {x: 0, y: 2.5 * GRID},
+        {x: 6 * GRID, y: 2.5 * GRID},
+        {x: 6 * GRID, y: 9.5 * GRID},
+        {x: 12 * GRID, y: 9.5 * GRID},
+        {x: 12 * GRID, y: 1.5 * GRID},
+        {x: 18 * GRID, y: 1.5 * GRID},
+        {x: 18 * GRID, y: 8.5 * GRID},
+        {x: 24 * GRID, y: 8.5 * GRID}
+    ];
+
+    // --- 25 Characters Dictionary (with projectile energy bolt color themes) ---
+    const TOWER_TYPES = {
+        recruit:   { tier: 1, name: 'Recruit', icon: '🧑‍🌾', description: 'Cheap physical poker.', cost: 15, range: 110, damage: 8, rate: 25, projectilespeed: 18, projectiletype: 'bolt', boltcolor: '#9ca3af' },
+        scout:     { tier: 1, name: 'Scout', icon: '🏃‍♂️', description: 'Lightweight swift speedster.', cost: 25, range: 140, damage: 10, rate: 16, projectilespeed: 20, projectiletype: 'bolt', boltcolor: '#f87171' },
+        slinger:   { tier: 1, name: 'Slinger', icon: '🪵', description: 'Flings rock shards.', cost: 35, range: 160, damage: 14, rate: 35, projectilespeed: 16, projectiletype: 'bolt', boltcolor: '#b45309' },
+        archer:    { tier: 1, name: 'Archer', icon: '🏹', description: 'Standard range energy bolts.', cost: 45, range: 200, damage: 18, rate: 30, projectilespeed: 22, projectiletype: 'bolt', boltcolor: '#fbbf24' },
+        hunter:    { tier: 1, name: 'Hunter', icon: '🐺', description: 'Wilderness tactical tracker.', cost: 55, range: 150, damage: 28, rate: 45, projectilespeed: 19, projectiletype: 'bolt', boltcolor: '#047857' },
+        pyro:      { tier: 1, name: 'Pyro Mage', icon: '🔥', description: 'Fires splashy explosive bolts.', cost: 70, range: 140, damage: 22, rate: 50, projectilespeed: 14, projectiletype: 'bolt', splashradius: 60, boltcolor: '#f97316' },
+        militia:   { tier: 1, name: 'Militiaman', icon: '🪓', description: 'Brave regional fighter beams.', cost: 80, range: 105, damage: 40, rate: 38, projectilespeed: 17, projectiletype: 'bolt', boltcolor: '#78350f' },
+        squire:    { tier: 1, name: 'Squire', icon: '🛡️', description: 'Sturdy beginner defender.', cost: 95, range: 115, damage: 55, rate: 42, projectilespeed: 16, projectiletype: 'bolt', boltcolor: '#60a5fa' },
+
+        knight:    { tier: 2, name: 'Knight', icon: '⚔️', description: 'Heavy silver energy slashes.', cost: 115, range: 100, damage: 85, rate: 40, projectilespeed: 18, projectiletype: 'bolt', boltcolor: '#e5e7eb' },
+        crossbow:  { tier: 2, name: 'Crossbowman', icon: '🎯', description: 'Slow piercing heavy spikes.', cost: 135, range: 240, damage: 75, rate: 65, projectilespeed: 28, projectiletype: 'bolt', boltcolor: '#dc2626' },
+        druid:     { tier: 2, name: 'Druid', icon: '🍃', description: 'Nature bolts slow down targets.', cost: 155, range: 180, damage: 25, rate: 30, projectilespeed: 15, projectiletype: 'bolt', specialeffect: 'slow', boltcolor: '#10b981' },
+        alchemist: { tier: 2, name: 'Alchemist', icon: '🧪', description: 'Volatile hazardous chemical splash.', cost: 185, range: 170, damage: 60, rate: 55, projectilespeed: 13, projectiletype: 'bolt', splashradius: 90, boltcolor: '#84cc16' },
+        ninja:     { tier: 2, name: 'Ninja', icon: '🥷', description: 'Rapid flurry of dark bolts.', cost: 215, range: 135, damage: 24, rate: 10, projectilespeed: 30, projectiletype: 'bolt', boltcolor: '#6b7280' },
+        wizard:    { tier: 2, name: 'Wizard', icon: '🔮', description: 'Concentrated magical spikes.', cost: 255, range: 230, damage: 120, rate: 45, projectilespeed: 24, projectiletype: 'bolt', boltcolor: '#a855f7' },
+        spearman:  { tier: 2, name: 'Spearman', icon: '🔱', description: 'Extended pierce range laser.', cost: 295, range: 130, damage: 140, rate: 36, projectilespeed: 21, projectiletype: 'bolt', boltcolor: '#06b6d4' },
+        bard:      { tier: 2, name: 'Bard', icon: '🪕', description: 'Sonic blast waves damage groups.', cost: 345, range: 160, damage: 80, rate: 40, projectilespeed: 16, projectiletype: 'bolt', splashradius: 70, boltcolor: '#ec4899' },
+        monk:      { tier: 2, name: 'Monk', icon: '🥋', description: 'Swift physical palm impacts.', cost: 395, range: 105, damage: 190, rate: 22, projectilespeed: 22, projectiletype: 'bolt', boltcolor: '#f59e0b' },
+
+        cleric:    { tier: 3, name: 'High Cleric', icon: '☀️', description: 'Radiant holy sun bursts.', cost: 445, range: 210, damage: 220, rate: 50, projectilespeed: 20, projectiletype: 'bolt', boltcolor: '#fef08a' },
+        assassin:  { tier: 3, name: 'Assassin', icon: '🗡️', description: 'Lethal black execution darts.', cost: 495, range: 90, damage: 650, rate: 70, projectilespeed: 26, projectiletype: 'bolt', boltcolor: '#111827' },
+        ice_queen: { tier: 3, name: 'Ice Queen', icon: '👑', description: 'Blizzard storm freezing bolt.', cost: 565, range: 260, damage: 85, rate: 32, projectilespeed: 18, projectiletype: 'bolt', specialeffect: 'slow', boltcolor: '#93c5fd' },
+        warlock:   { tier: 3, name: 'Warlock', icon: '💀', description: 'Explosive shadow splash curses.', cost: 645, range: 250, damage: 290, rate: 60, projectilespeed: 17, projectiletype: 'bolt', splashradius: 110, boltcolor: '#7c3aed' },
+        paladin:   { tier: 3, name: 'Paladin', icon: '🦾', description: 'Divine golden kinetic shocks.', cost: 745, range: 120, damage: 480, rate: 48, projectilespeed: 19, projectiletype: 'bolt', splashradius: 75, boltcolor: '#eab308' },
+        necromancer:{tier: 3, name: 'Necromancer',icon:'🧙', description: 'Haunted spectral energy skulls.', cost: 845, range: 220, damage: 410, rate: 52, projectilespeed: 16, projectiletype: 'bolt', boltcolor: '#4b5563' },
+        executioner:{tier: 3, name: 'Executioner',icon:'🪓', description: 'Devastating visual crimson swings.', cost: 995, range: 110, damage: 950, rate: 65, projectilespeed: 20, projectiletype: 'bolt', boltcolor: '#991b1b' },
+        dragon_m:  { tier: 3, name: 'Dragon Rider', icon: '🐉', description: 'Ultimate cosmic flame bolts.', cost: 1245, range: 320, damage: 800, rate: 55, projectilespeed: 25, projectiletype: 'bolt', splashradius: 130, boltcolor: '#ea580c' }
+    };
+
+    const ENEMY_TYPES = {
+        slime:      { icon: '🟢', health: 12, speed: 1.4, reward: 2, size: 14 },
+        beetle:     { icon: '🪲', health: 22, speed: 1.7, reward: 3, size: 13 },
+        bat:        { icon: '🦇', health: 16, speed: 2.6, reward: 3, size: 12 },
+        spider:     { icon: '🕷️', health: 38, speed: 2.1, reward: 4, size: 15 },
+        goblin:     { icon: '👺', health: 65, speed: 1.9, reward: 5, size: 17 },
+        wolf:       { icon: '🐺', health: 55, speed: 2.9, reward: 6, size: 16 },
+        skeleton:   { icon: '💀', health: 110, speed: 1.3, reward: 7, size: 18 },
+        orc:        { icon: '👹', health: 210, speed: 1.1, reward: 10, size: 21 },
+        ghost:      { icon: '👻', health: 150, speed: 2.3, reward: 12, size: 17 },
+        mummy:      { icon: '🧻', health: 320, speed: 0.9, reward: 15, size: 20 },
+        vampire:    { icon: '🧛', health: 500, speed: 2.0, reward: 22, size: 19 },
+        troll:      { icon: '🧌', health: 950, speed: 0.8, reward: 30, size: 25 },
+        golem:      { icon: '🗿', health: 2000, speed: 0.6, reward: 45, size: 28 },
+        demon:      { icon: '😈', health: 3800, speed: 1.3, reward: 75, size: 26 },
+        dragon:     { icon: '🐲', health: 14000, speed: 1.0, reward: 300, size: 38 }
+    };
+
+    // --- Game Engine State ---
+    let state = {
+        gold: 100, 
+        lives: 100,
+        wave: 1,
+        towers: [],
+        boughtCounts: {}, 
+        selectedShopItem: null,
+        activeSpawns: [],
+        spawnTimer: 0,
+        waveActive: false,
+        damageUpgradeCount: 0,
+        damageUpgradeCost: 50
+    };
+
+    let placementPendingConfirm = false;
+    let pendingPlacementCoordinates = { x: 0, y: 0 };
+    let mouseLiveCoordinates = { x: 0, y: 0 };
+
+    Object.keys(TOWER_TYPES).forEach(key => state.boughtCounts[key] = 0);
+
+    let enemies = [];
+    let projectiles = [];
+    let particles = [];
+    let WAVES_DATA = [];
+    let selectedPlacedTower = null;
+
+    function generate100Waves() {
+        WAVES_DATA = [];
+        for (let waveIndex = 1; waveIndex <= 100; waveIndex++) {
+            let list = [];
+            let healthScale = 1.0 + (waveIndex * 0.16) + Math.pow(waveIndex / 15, 2.4); 
+            
+            let pool = [];
+            if (waveIndex <= 12) pool = ['slime', 'beetle', 'bat'];
+            else if (waveIndex <= 30) pool = ['spider', 'goblin', 'wolf', 'skeleton'];
+            else if (waveIndex <= 55) pool = ['orc', 'ghost', 'mummy', 'vampire'];
+            else if (waveIndex <= 80) pool = ['troll', 'golem', 'demon'];
+            else pool = ['skeleton', 'vampire', 'golem', 'demon', 'dragon'];
+
+            let totalSpawns = 6 + Math.floor(waveIndex * 1.2);
+            for (let i = 0; i < totalSpawns; i++) {
+                let randomType = pool[Math.floor(Math.random() * pool.length)];
+                list.push({ type: randomType, multiplier: healthScale });
+            }
+
+            if (waveIndex % 5 === 0) {
+                let bossCount = Math.floor(waveIndex / 25) + 1;
+                let bossType = 'troll';
+                if (waveIndex > 40) bossType = 'golem';
+                if (waveIndex > 70) bossType = 'demon';
+                if (waveIndex % 10 === 0) bossType = 'dragon';
+                for(let b=0; b<bossCount; b++) {
+                    list.unshift({ type: bossType, multiplier: healthScale * 2.0 });
+                }
+            }
+            WAVES_DATA.push(list);
+        }
+    }
+
+    function getDamageMultiplier() {
+        return 1.0 + (state.damageUpgradeCount * 0.15); 
+    }
+
+    function getInflatedCost(typeId) {
+        let base = TOWER_TYPES[typeId].cost;
+        let bought = state.boughtCounts[typeId] || 0;
+        let multiplied = base * Math.pow(1.08, bought); 
+        return Math.round(multiplied / 5) * 5; 
+    }
+
+    function getCalculatedDamage(typeId, level = 1) {
+        let baseDamage = TOWER_TYPES[typeId].damage;
+        let levelScale = 1 + ((level - 1) * 0.65);
+        return Math.round(baseDamage * levelScale * getDamageMultiplier());
+    }
+
+    // --- Entities Implementations ---
+    class Enemy {
+        constructor(type, healthMultiplier) {
+            this.config = ENEMY_TYPES[type];
+            this.icon = this.config.icon;
+            this.maxHealth = Math.floor(this.config.health * healthMultiplier);
+            this.health = this.maxHealth;
+            this.baseSpeed = this.config.speed;
+            this.speed = this.baseSpeed;
+            this.reward = this.config.reward;
+            this.size = this.config.size;
+            
+            this.x = PATH_NODES[0].x;
+            this.y = PATH_NODES[0].y;
+            this.nodeIndex = 1;
+            this.slowTimer = 0;
+            this.dead = false;
+        }
+
+        update() {
+            if (this.dead) return;
+
+            if (this.slowTimer > 0) {
+                this.speed = this.baseSpeed * 0.5; 
+                this.slowTimer--;
+            } else {
+                this.speed = this.baseSpeed;
+            }
+
+            let destination = PATH_NODES[this.nodeIndex];
+            let dx = destination.x - this.x;
+            let dy = destination.y - this.y;
+            let distance = Math.hypot(dx, dy);
+
+            if (distance <= this.speed) {
+                this.x = destination.x;
+                this.y = destination.y;
+                this.nodeIndex++;
+                if (this.nodeIndex >= PATH_NODES.length) {
+                    this.dead = true;
+                    applyDamageToPlayer(1);
+                }
+            } else {
+                this.x += (dx / distance) * this.speed;
+                this.y += (dy / distance) * this.speed;
+            }
+        }
+
+        takeHit(damageReceived, effect) {
+            this.health -= damageReceived;
+            if (effect === 'slow') this.slowTimer = 80;
+            if (this.health <= 0 && !this.dead) {
+                this.dead = true;
+                addGold(this.reward);
+                triggerEmitters(this.x, this.y, '💥');
+            }
+        }
+
+        draw() {
+            ctx.font = `${this.size * 2}px Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(this.icon, this.x, this.y);
+
+            let status = Math.max(0, this.health / this.maxHealth);
+            ctx.fillStyle = "#ef4444";
+            ctx.fillRect(this.x - 22, this.y - this.size - 10, 44, 5);
+            ctx.fillStyle = "#22c55e";
+            ctx.fillRect(this.x - 22, this.y - this.size - 10, 44 * status, 5);
+
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 12px 'Segoe UI'";
+            ctx.fillText(Math.ceil(this.health), this.x, this.y - this.size - 18);
+        }
+    }
+
+    class Tower {
+        constructor(x, y, typeId, level = 1) {
+            this.x = x;
+            this.y = y;
+            this.typeId = typeId;
+            this.level = level;
+            this.cooldown = 0;
+            this.angle = 0;
+            this.syncStats();
+        }
+
+        syncStats() {
+            let data = TOWER_TYPES[this.typeId];
+            this.range = data.range + (this.level * 8);
+            this.rate = Math.max(4, data.rate - (this.level * 2));
+            this.icon = data.icon;
+            this.boltcolor = data.boltcolor || '#ffffff';
+            
+            let currentCost = getInflatedCost(this.typeId);
+            this.sellValue = Math.round((currentCost * 0.4) / 5) * 5;
+        }
+
+        update() {
+            if (this.cooldown > 0) this.cooldown--;
+            
+            let optimalTarget = null;
+            let bestTrackScore = -1;
+
+            for (let enemy of enemies) {
+                if (Math.hypot(enemy.x - this.x, enemy.y - this.y) <= this.range) {
+                    let score = enemy.nodeIndex * 10000 - Math.hypot(PATH_NODES[enemy.nodeIndex].x - enemy.x, PATH_NODES[enemy.nodeIndex].y - enemy.y);
+                    if (score > bestTrackScore) {
+                        bestTrackScore = score;
+                        optimalTarget = enemy;
+                    }
+                }
+            }
+
+            if (optimalTarget) {
+                this.angle = Math.atan2(optimalTarget.y - this.y, optimalTarget.x - this.x);
+                if (this.cooldown <= 0) {
+                    let data = TOWER_TYPES[this.typeId];
+                    let currentComputedDamage = getCalculatedDamage(this.typeId, this.level);
+
+                    // Shoot energy bolt ammo bullet toward target
+                    projectiles.push(new Projectile(this.x, this.y, optimalTarget, currentComputedDamage, data.projectilespeed, this.boltcolor, data.specialeffect, data.splashradius));
+                    this.cooldown = this.rate;
+                }
+            }
+        }
+
+        draw() {
+            // Draw Base Mounting Plate
+            ctx.fillStyle = "#1e293b"; 
+            ctx.beginPath(); ctx.arc(this.x, this.y, 26, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = "#475569"; ctx.lineWidth = 3; ctx.stroke();
+
+            // Level Indicators
+            ctx.fillStyle = getVariableColor('--gold');
+            for(let i=0; i<this.level; i++) {
+                ctx.beginPath(); ctx.arc(this.x - 12 + (i * 12), this.y + 16, 3, 0, Math.PI*2); ctx.fill();
+            }
+
+            // Draw Character Emoji
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.font = "28px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(this.icon, 0, -4);
+            ctx.restore();
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, target, damage, speed, color, effect, splashradius) {
+            this.x = x; this.y = y; this.target = target;
+            this.damage = damage; this.speed = speed; this.color = color; 
+            this.effect = effect; this.splashradius = splashradius;
+            this.dead = false;
+            
+            // For calculating bullet vector angles
+            this.targetLastX = target.x;
+            this.targetLastY = target.y;
+        }
+
+        update() {
+            if (!this.target.dead) {
+                this.targetLastX = this.target.x;
+                this.targetLastY = this.target.y;
+            }
+            
+            let dx = this.targetLastX - this.x;
+            let dy = this.targetLastY - this.y;
+            let distance = Math.hypot(dx, dy);
+
+            if (distance <= this.speed + 8) {
+                if (this.splashradius) {
+                    enemies.forEach(enemy => {
+                        if (Math.hypot(enemy.x - this.x, enemy.y - this.y) <= this.splashradius) enemy.takeHit(this.damage, this.effect);
+                    });
+                } else {
+                    if (!this.target.dead) this.target.takeHit(this.damage, this.effect);
+                }
+                this.dead = true;
+            } else {
+                this.x += (dx / distance) * this.speed;
+                this.y += (dy / distance) * this.speed;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            let angle = Math.atan2(this.targetLastY - this.y, this.targetLastX - this.x);
+            ctx.translate(this.x, this.y);
+            ctx.rotate(angle);
+
+            // Render glowing energy bullet/laser beam bolt
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(-18, 0);
+            ctx.lineTo(6, 0);
+            ctx.stroke();
+
+            // Core secondary accent overlay line
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-16, 0);
+            ctx.lineTo(4, 0);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+    class BurstParticle {
+        constructor(x, y, icon) {
+            this.x = x; this.y = y; this.icon = icon;
+            this.vx = (Math.random() - 0.5) * 5;
+            this.vy = (Math.random() - 0.5) * 5 - 2;
+            this.alpha = 1.0;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.04; }
+        draw() {
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.font = "14px Arial"; ctx.fillText(this.icon, this.x, this.y);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    // --- Systems Controllers ---
+    function triggerEmitters(x, y, icon) {
+        for(let i=0; i<4; i++) particles.push(new BurstParticle(x, y, icon));
+    }
+
+    function addGold(amount) {
+        state.gold += amount;
+        document.getElementById('money-display').innerText = "$" + state.gold;
+    }
+
+    function applyDamageToPlayer(amount) {
+        state.lives -= amount;
+        document.getElementById('lives-display').innerText = Math.max(0, state.lives);
+        if (state.lives <= 0) displayEndMessage(false);
+    }
+
+    function startNextWave() {
+        if (state.waveActive || state.wave > 100) return;
+        state.waveActive = true;
+        state.activeSpawns = [...WAVES_DATA[state.wave - 1]];
+        document.getElementById('wave-start-button').style.display = 'none';
+        document.getElementById('wave-display').innerText = `${state.wave} / 100`;
+    }
+
+    function lineDistanceVector(px, py, x1, y1, x2, y2) {
+        let lengthSquared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+        if (lengthSquared === 0) return Math.hypot(px-x1, py-y1);
+        let t = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / lengthSquared));
+        return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
+    }
+
+    function verifyValidPlacement(towerX, towerY) {
+        if (towerX < 35 || towerX > canvas.width - 35 || towerY < 35 || towerY > canvas.height - 35) return false;
+        for (let i = 0; i < PATH_NODES.length - 1; i++) {
+            let node1 = PATH_NODES[i], node2 = PATH_NODES[i+1];
+            if (lineDistanceVector(towerX, towerY, node1.x, node1.y, node2.x, node2.y) < PATH_WIDTH/2 + 20) return false;
+        }
+        for (let tower of state.towers) {
+            if (Math.hypot(tower.x - towerX, tower.y - towerY) < 45) return false;
+        }
+        return true;
+    }
+
+    function syncDynamicShopGrids() {
+        const globalGrid = document.getElementById('global-grid');
+        globalGrid.innerHTML = '';
+        
+        const globalItem = document.createElement('div');
+        globalItem.className = 'shop-item';
+        globalItem.innerHTML = `
+            <div class="ball-icon">💎</div>
+            <div class="item-info">
+                <b style="color: #60a5fa">Damage Upgrade</b>
+                <i>Increases damage of all units by +15%</i>
+                <span class="damage-stat">Current Boost: x${getDamageMultiplier().toFixed(2)}</span>
+            </div>
+            <div class="price-tag">
+                <span class="price">$${state.damageUpgradeCost}</span>
+                <span class="count-badge" style="color: #60a5fa">Purchased: ${state.damageUpgradeCount}</span>
+            </div>
+        `;
+        globalItem.onclick = () => {
+            if (state.gold >= state.damageUpgradeCost) {
+                state.gold -= state.damageUpgradeCost;
+                state.damageUpgradeCount++;
+                state.damageUpgradeCost = Math.round((state.damageUpgradeCost * 1.6) / 5) * 5; 
+                document.getElementById('damage-boost-display').innerText = `x${getDamageMultiplier().toFixed(2)}`;
+                document.getElementById('money-display').innerText = "$" + state.gold;
+                syncDynamicShopGrids();
+            }
+        };
+        globalGrid.appendChild(globalItem);
+
+        const tier1 = document.getElementById('tier1-grid');
+        const tier2 = document.getElementById('tier2-grid');
+        const tier3 = document.getElementById('tier3-grid');
+        
+        tier1.innerHTML = ''; tier2.innerHTML = ''; tier3.innerHTML = '';
+
+        Object.keys(TOWER_TYPES).forEach(id => {
+            const spec = TOWER_TYPES[id];
+            const currentDynamicPrice = getInflatedCost(id);
+            const count = state.boughtCounts[id] || 0;
+            const updatedDamage = getCalculatedDamage(id, 1);
+            
+            const div = document.createElement('div');
+            div.className = `shop-item ${state.selectedShopItem === id ? 'selected' : ''}`;
+            div.innerHTML = `
+                <div class="ball-icon">${spec.icon}</div>
+                <div class="item-info">
+                    <b style="color: var(--accent)">${spec.name}</b>
+                    <i>${spec.description}</i>
+                    <span class="damage-stat">Damage: ${updatedDamage}</span>
+                </div>
+                <div class="price-tag">
+                    <span class="price">$${currentDynamicPrice}</span>
+                    <span class="count-badge">Owned: ${count}</span>
+                </div>
+            `;
+            
+            div.onclick = () => {
+                let activePrice = getInflatedCost(id);
+                if (state.gold >= activePrice) {
+                    state.selectedShopItem = id;
+                    placementPendingConfirm = false; 
+                    setView('game'); 
+                } else {
+                    state.selectedShopItem = null;
+                }
+            };
+
+            if(spec.tier === 1) tier1.appendChild(div);
+            if(spec.tier === 2) tier2.appendChild(div);
+            if(spec.tier === 3) tier3.appendChild(div);
+        });
+    }
+
+    function getVariableColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+    canvas.addEventListener('mousemove', (e) => {
+        let rect = canvas.getBoundingClientRect();
+        mouseLiveCoordinates.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        mouseLiveCoordinates.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        let rect = canvas.getBoundingClientRect();
+        let mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        let my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        let snapX = Math.floor(mx / 40) * 40 + 20;
+        let snapY = Math.floor(my / 40) * 40 + 20;
+
+        if (state.selectedShopItem) {
+            if (verifyValidPlacement(snapX, snapY)) {
+                placementPendingConfirm = true;
+                pendingPlacementCoordinates.x = snapX;
+                pendingPlacementCoordinates.y = snapY;
+                
+                let spec = TOWER_TYPES[state.selectedShopItem];
+                document.getElementById('placement-status-text').innerText = `Place ${spec.name} here for $${getInflatedCost(state.selectedShopItem)}?`;
+                document.getElementById('placement-confirmation-bar').style.display = 'flex';
+            }
+            return; 
+        }
+
+        for (let tower of state.towers) {
+            if (Math.hypot(tower.x - mx, tower.y - my) < 28) {
+                displayUpgradePanel(tower);
+                return;
+            }
+        }
+    });
+
+    function finalizePlacementConfirm() {
+        if (!state.selectedShopItem || !placementPendingConfirm) return;
+        
+        let activePrice = getInflatedCost(state.selectedShopItem);
+        if (state.gold >= activePrice && verifyValidPlacement(pendingPlacementCoordinates.x, pendingPlacementCoordinates.y)) {
+            state.gold -= activePrice;
+            document.getElementById('money-display').innerText = "$" + state.gold;
+            state.towers.push(new Tower(pendingPlacementCoordinates.x, pendingPlacementCoordinates.y, state.selectedShopItem));
+            state.boughtCounts[state.selectedShopItem]++; 
+        }
+        cancelActivePlacement();
+    }
+
+    function cancelActivePlacement() {
+        state.selectedShopItem = null;
+        placementPendingConfirm = false;
+        document.getElementById('placement-confirmation-bar').style.display = 'none';
+        syncDynamicShopGrids();
+    }
+
+    function displayUpgradePanel(tower) {
+        selectedPlacedTower = tower;
+        let overlay = document.getElementById('modal-container-overlay');
+        let spec = TOWER_TYPES[tower.typeId];
+        
+        document.getElementById('upgrade-modal-title').innerText = `${spec.name} Level ${tower.level}`;
+        
+        let upgradeButton = document.getElementById('upgrade-modal-button');
+        if (tower.level < 3) {
+            let upgradeCost = spec.upgradecosts[tower.level - 1];
+            upgradeButton.innerText = `Upgrade ($${upgradeCost})`;
+            upgradeButton.style.display = 'block';
+            upgradeButton.onclick = () => {
+                if (state.gold >= upgradeCost) {
+                    state.gold -= upgradeCost;
+                    document.getElementById('money-display').innerText = "$" + state.gold;
+                    tower.level++;
+                    tower.syncStats();
+                    displayUpgradePanel(tower);
+                }
+            };
+        } else {
+            upgradeButton.style.display = 'none';
+        }
+
+        document.getElementById('upgrade-modal-sell').innerText = `Scrap (+$${tower.sellValue})`;
+        document.getElementById('upgrade-modal-sell').onclick = () => {
+            state.gold += tower.sellValue;
+            document.getElementById('money-display').innerText = "$" + state.gold;
+            state.towers = state.towers.filter(t => t !== tower);
+            closeCenteredModal();
+        };
+
+        overlay.style.display = 'flex';
+    }
+
+    function closeCenteredModal() {
+        document.getElementById('modal-container-overlay').style.display = 'none';
+        selectedPlacedTower = null;
+    }
+
+    // --- Render Loops (macOS Emerald Green & Clay Pot Brown Path) ---
+    function renderRoadway() {
+        // High visibility macOS Emerald Green grass background
+        ctx.fillStyle = "#28c840"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Clay pot brown road layout setup
+        ctx.strokeStyle = getVariableColor('--path');
+        ctx.lineWidth = PATH_WIDTH;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        for(let i=0; i<PATH_NODES.length; i++) {
+            if(i===0) ctx.moveTo(PATH_NODES[i].x, PATH_NODES[i].y);
+            else ctx.lineTo(PATH_NODES[i].x, PATH_NODES[i].y);
+        }
+        ctx.stroke();
+
+        // Dark terracotta under-shadow layer border rim
+        ctx.strokeStyle = "#783214";
+        ctx.lineWidth = PATH_WIDTH + 8;
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function runLoop() {
+        if (state.lives <= 0 || state.wave > 100) return;
+
+        if (state.waveActive) {
+            if (state.activeSpawns.length > 0) {
+                state.spawnTimer--;
+                if (state.spawnTimer <= 0) {
+                    let nextUnit = state.activeSpawns.shift();
+                    enemies.push(new Enemy(nextUnit.type, nextUnit.multiplier));
+                    state.spawnTimer = Math.max(15, 45 - Math.floor(state.wave * 0.25)); 
+                }
+            } else if (enemies.length === 0) {
+                state.waveActive = false;
+                state.wave++;
+                addGold(40 + state.wave * 15); 
+                
+                if (state.wave > 100) {
+                    displayEndMessage(true);
+                } else {
+                    document.getElementById('wave-start-button').style.display = 'block';
+                    document.getElementById('wave-start-button').innerText = `Launch Wave ${state.wave}`;
+                    document.getElementById('wave-display').innerText = `${state.wave} / 100`;
+                }
+            }
+        }
+
+        state.towers.forEach(tower => tower.update());
+        projectiles.forEach(projectile => projectile.update());
+        enemies.forEach(enemy => enemy.update());
+        particles.forEach(particle => particle.update());
+
+        projectiles = projectiles.filter(projectile => !projectile.dead);
+        enemies = enemies.filter(enemy => !enemy.dead);
+        particles = particles.filter(particle => particle.alpha > 0);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        renderRoadway();
+        
+        if (selectedPlacedTower) {
+            ctx.beginPath();
+            ctx.arc(selectedPlacedTower.x, selectedPlacedTower.y, selectedPlacedTower.range, 0, Math.PI * 2);
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        if (state.selectedShopItem) {
+            let previewX = placementPendingConfirm ? pendingPlacementCoordinates.x : Math.floor(mouseLiveCoordinates.x / 40) * 40 + 20;
+            let previewY = placementPendingConfirm ? pendingPlacementCoordinates.y : Math.floor(mouseLiveCoordinates.y / 40) * 40 + 20;
+            let spec = TOWER_TYPES[state.selectedShopItem];
+
+            ctx.save();
+            ctx.globalAlpha = 0.65;
+            ctx.font = "28px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(spec.icon, previewX, previewY - 4);
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.arc(previewX, previewY, spec.range + 8, 0, Math.PI * 2); 
+            ctx.strokeStyle = verifyValidPlacement(previewX, previewY) ? "#16a34a" : "#dc2626";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        state.towers.forEach(tower => tower.draw());
+        enemies.forEach(enemy => enemy.draw());
+        projectiles.forEach(projectile => projectile.draw());
+        particles.forEach(particle => particle.draw());
+
+        requestAnimationFrame(runLoop);
+    }
+
+    function setView(targetView) { 
+        document.querySelectorAll('.view').forEach(element => element.classList.remove('active'));
+        document.querySelectorAll('.navigation-button').forEach(element => element.classList.remove('active'));
+        document.getElementById(targetView + '-view').classList.add('active');
+        document.getElementById('navigation-' + targetView).classList.add('active');
+        
+        closeCenteredModal();
+        if (targetView === 'shop') {
+            cancelActivePlacement();
+            syncDynamicShopGrids();
+        }
+    }
+
+    function displayEndMessage(victoryCondition) {
+        document.getElementById('fullscreen-message').style.display = 'flex';
+        document.getElementById('message-title').innerText = victoryCondition ? "VICTORY CONDITION SECURED" : "REALM OVERRUN";
+        document.getElementById('message-title').style.color = victoryCondition ? getVariableColor('--gold') : getVariableColor('--danger');
+        document.getElementById('message-subtitle').innerText = victoryCondition ? "You successfully survived all 100 waves!" : `Defeated on Wave ${state.wave}.`;
+        localStorage.removeItem('save_tower_defense_final');
+    }
+
+    function resetGame() {
+        localStorage.removeItem('save_tower_defense_final');
+        location.reload();
+    }
+
+    function executeAutosave() {
+        if (state.lives <= 0 || state.wave > 100 || state.selectedShopItem) return;
+        const bundle = {
+            gold: state.gold,
+            lives: state.lives,
+            wave: state.wave,
+            boughtCounts: state.boughtCounts,
+            damageUpgradeCount: state.damageUpgradeCount,
+            damageUpgradeCost: state.damageUpgradeCost,
+            towers: state.towers.map(tower => ({ x: tower.x, y: tower.y, typeId: tower.typeId, level: tower.level }))
+        };
+        localStorage.setItem('save_tower_defense_final', btoa(JSON.stringify(bundle)));
+    }
+
+    function tryLoadFromAutosave() {
+        const rawSave = localStorage.getItem('save_tower_defense_final');
+        if (rawSave) {
+            try {
+                const parsed = JSON.parse(atob(rawSave));
+                state.gold = parsed.gold;
+                state.lives = parsed.lives;
+                state.wave = parsed.wave;
+                if(parsed.boughtCounts) state.boughtCounts = parsed.boughtCounts;
+                if(parsed.damageUpgradeCount !== undefined) state.damageUpgradeCount = parsed.damageUpgradeCount;
+                if(parsed.damageUpgradeCost !== undefined) state.damageUpgradeCost = parsed.damageUpgradeCost;
+                
+                parsed.towers.forEach(tower => state.towers.push(new Tower(tower.x, tower.y, tower.typeId, tower.level)));
+                
+                document.getElementById('money-display').innerText = "$" + state.gold;
+                document.getElementById('lives-display').innerText = state.lives;
+                document.getElementById('wave-display').innerText = `${state.wave} / 100`;
+                document.getElementById('damage-boost-display').innerText = `x${getDamageMultiplier().toFixed(2)}`;
+                document.getElementById('wave-start-button').innerText = `Launch Wave ${state.wave}`;
+            } catch(error) {}
+        }
+    }
+
+    window.onload = () => {
+        generate100Waves();
+        tryLoadFromAutosave();
+        syncDynamicShopGrids();
+        runLoop();
+        setInterval(executeAutosave, 5000); 
+    };
+</script>
+</body>
+</html>
