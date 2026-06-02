@@ -45,6 +45,10 @@ def generate_arcade():
             --border-color: #27272a;
         }}
 
+        * {{
+            box-sizing: border-box;
+        }}
+
         body {{
             margin: 0;
             padding: 0;
@@ -64,7 +68,8 @@ def generate_arcade():
             height: 70px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end; /* Keeps navigation elements cleanly aligned to the right */
+            position: relative;        /* Necessary context anchor to center the absolute child logo */
             flex-shrink: 0;
             z-index: 100;
         }}
@@ -77,6 +82,13 @@ def generate_arcade():
             color: var(--text-main);
             user-select: none;
             cursor: pointer;
+            
+            /* Absolute centering mechanics */
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
         }}
 
         .logo span {{
@@ -114,7 +126,6 @@ def generate_arcade():
             gap: 25px;
             padding: 40px;
             width: 100%;
-            box-sizing: border-box;
             overflow-y: auto;
             align-content: start;
         }}
@@ -133,7 +144,6 @@ def generate_arcade():
             justify-content: center;
             align-items: center;    
             padding: 20px;
-            box-sizing: border-box;
             background: radial-gradient(circle at 50% 50%, #18181b, #09090b);
         }}
 
@@ -155,24 +165,18 @@ def generate_arcade():
         #play-view {{
             display: none;
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: #000000;
-            box-sizing: border-box;
             place-items: center;
-            padding: 30px; 
+            padding: 20px;
         }}
 
         #game-frame-wrapper {{
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 16 / 9; 
-            max-width: 100%;
-            max-height: 100%;
+            position: relative;
             background-color: #050505;
-            box-sizing: border-box;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
+            height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
         }}
 
         iframe {{
@@ -180,16 +184,6 @@ def generate_arcade():
             height: 100% !important;
             border: none !important;
             display: block !important;
-        }}
-
-        @media (max-aspect-ratio: 1/1) {{
-            #play-view {{
-                padding: 10px; 
-            }}
-            #game-frame-wrapper {{
-                aspect-ratio: auto; 
-                height: 65vh;       
-            }}
         }}
     </style>
 </head>
@@ -219,6 +213,18 @@ def generate_arcade():
         const playView = document.getElementById('play-view');
         const backBtn = document.getElementById('back-home-btn');
         const iframe = document.getElementById('arcade-processor');
+        const wrapper = document.getElementById('game-frame-wrapper');
+
+        function sendResizeToGame() {{
+            if (iframe.contentWindow) {{
+                const rect = wrapper.getBoundingClientRect();
+                iframe.contentWindow.postMessage({{
+                    type: 'ARCADE_RESIZE_COMMAND',
+                    width: rect.width,
+                    height: rect.height
+                }}, '*');
+            }}
+        }}
 
         function launchGame(gameFilePath) {{
             iframe.src = gameFilePath;
@@ -226,7 +232,7 @@ def generate_arcade():
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            handleDynamicDeviceResize();
+            setTimeout(sendResizeToGame, 50);
         }}
 
         function showBrowseView() {{
@@ -236,23 +242,8 @@ def generate_arcade():
             browseView.style.display = 'grid';
         }}
 
-        function handleDynamicDeviceResize() {{
-            if (playView.style.display !== 'grid') return;
-
-            const currentWidth = window.innerWidth;
-            const wrapper = document.getElementById('game-frame-wrapper');
-
-            if (currentWidth < 768) {{
-                wrapper.style.width = "98%";
-            }} else if (currentWidth >= 768 && currentWidth <= 1024) {{
-                wrapper.style.width = "94%";
-            }} else {{
-                wrapper.style.width = "100%";
-            }}
-        }}
-
-        window.addEventListener('resize', handleDynamicDeviceResize);
-        window.addEventListener('orientationchange', handleDynamicDeviceResize);
+        window.addEventListener('resize', sendResizeToGame);
+        iframe.addEventListener('load', sendResizeToGame);
     </script>
 
 </body>
