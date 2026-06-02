@@ -174,10 +174,13 @@ def generate_arcade():
             background-color: #050505;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             
-            /* Box scales perfectly to viewport, preserving a true 16:9 boundary box */
+            /* Strict responsive bounds calculated against the height profile of laptop screen displays */
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
             overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }}
 
         iframe {{
@@ -185,10 +188,9 @@ def generate_arcade():
             height: 100% !important;
             border: none !important;
             display: block !important;
-            position: relative;
+            position: absolute;
             top: 0;
             left: 0;
-            transform: none !important; /* Stripped out custom vector scaler transforms */
         }}
     </style>
 </head>
@@ -224,11 +226,21 @@ def generate_arcade():
             if (iframe.contentWindow) {{
                 const rect = wrapper.getBoundingClientRect();
                 
-                // Direct layout dimension force payload execution
+                // Establish small-screen Chromebook safe base width & height coordinates
+                const baseVirtualW = 1024;
+                const baseVirtualH = 576;
+                
+                // Calculate scale multipliers for bigger screens like iMacs
+                const scaleX = rect.width / baseVirtualW;
+                const scaleY = rect.height / baseVirtualH;
+                const targetUpscalingFactor = Math.max(1, Math.min(scaleX, scaleY));
+
+                // Inform game scripts of final computed matrix layout sizing constraints
                 iframe.contentWindow.postMessage({{
                     type: 'ARCADE_RESIZE_COMMAND',
                     width: Math.floor(rect.width),
-                    height: Math.floor(rect.height)
+                    height: Math.floor(rect.height),
+                    scale: targetUpscalingFactor
                 }}, '*');
             }}
         }}
@@ -239,7 +251,7 @@ def generate_arcade():
             playView.style.display = 'grid'; 
             backBtn.style.display = 'block';
             
-            // Allow frame system a split second to lock positions before rendering sizes
+            // Allow layout calculations to stabilize before triggering size payloads
             setTimeout(sendResizeToGame, 60);
         }}
 
