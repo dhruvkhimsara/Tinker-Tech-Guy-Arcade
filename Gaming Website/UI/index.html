@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming Website</title>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --panel-dark: #141416;
+            --accent-green: #00ff88;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --border-color: #27272a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 30px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-main);
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .logo span {
+            color: var(--accent-green);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            border-color: var(--accent-green);
+            background-color: rgba(0, 255, 136, 0.05);
+        }
+
+        #content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #browse-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            width: 100%;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        .game-card {
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            aspect-ratio: 16 / 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;    
+            padding: 20px;
+            background: radial-gradient(circle at 50% 50%, #18181b, #09090b);
+        }
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-green);
+            box-shadow: 0 12px 30px rgba(0, 255, 136, 0.1);
+        }
+
+        .game-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        /* Fixed: Removed duplicate layout property so it hides on page boot up */
+        #play-view {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #000000;
+            place-items: center;
+            padding: 20px;
+        }
+
+        /* Fixed: Added a 40px subtraction buffer to completely prevent bottom edge spilling */
+        #game-frame-wrapper {
+            position: relative;
+            background-color: #050505;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
+            height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
+        }
+
+        iframe {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="showBrowseView()">Tinker Tech Guy's <span>Arcade</span></div>
+        <button class="nav-btn" id="back-home-btn" style="display: none;" onclick="showBrowseView()">← Back to Games</button>
+    </header>
+
+    <div id="content-area">
+        
+        <div id="browse-view">
+            </div>
+
+        <div id="play-view">
+            <div id="game-frame-wrapper">
+                <iframe id="arcade-processor" src=""></iframe>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const browseView = document.getElementById('browse-view');
+        const playView = document.getElementById('play-view');
+        const backBtn = document.getElementById('back-home-btn');
+        const iframe = document.getElementById('arcade-processor');
+        const wrapper = document.getElementById('game-frame-wrapper');
+
+        function sendResizeToGame() {
+            if (iframe.contentWindow) {
+                const rect = wrapper.getBoundingClientRect();
+                iframe.contentWindow.postMessage({
+                    type: 'ARCADE_RESIZE_COMMAND',
+                    width: rect.width,
+                    height: rect.height
+                }, '*');
+            }
+        }
+
+        function launchGame(gameFilePath) {
+            iframe.src = gameFilePath;
+            browseView.style.display = 'none';
+            playView.style.display = 'grid'; 
+            backBtn.style.display = 'block';
+            
+            setTimeout(sendResizeToGame, 50);
+        }
+
+        function showBrowseView() {
+            iframe.src = "";
+            playView.style.display = 'none';
+            backBtn.style.display = 'none';
+            browseView.style.display = 'grid';
+        }
+
+        window.addEventListener('resize', sendResizeToGame);
+        iframe.addEventListener('load', sendResizeToGame);
+    </script>
+
+</body>
+</html>
