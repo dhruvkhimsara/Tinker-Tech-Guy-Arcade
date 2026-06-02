@@ -121,26 +121,21 @@
             text-align: center;
         }
 
-        /* --- Updated Play View Layout --- */
         #play-view {
-            display: none; /* Toggled to 'flex' via JS to perfectly center the game box */
+            display: none;
             width: 100%;
             height: 100%;
             overflow: hidden;
             background-color: #000000;
             box-sizing: border-box;
-            justify-content: center;
-            align-items: center;
+            position: relative;
         }
 
-        /* --- Updated Dynamic Scaling Engine --- */
+        /* --- Updated Wrapper to Span the Entire Available Space --- */
         #game-frame-wrapper {
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            aspect-ratio: 16 / 9; 
-            background-color: #050505;
+            background-color: #000000;
         }
 
         iframe {
@@ -207,7 +202,7 @@
         function launchGame(gameFilePath) {
             iframe.src = gameFilePath;
             browseView.style.display = 'none';
-            playView.style.display = 'flex'; /* Changed from 'block' to 'flex' for centered layout mapping */
+            playView.style.display = 'block';
             backBtn.style.display = 'block';
         }
 
