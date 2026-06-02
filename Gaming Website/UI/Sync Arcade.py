@@ -175,18 +175,18 @@ def generate_arcade():
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             width: min(calc(100vw - 40px), calc((100vh - 110px) * 16 / 9));
             height: min(calc((100vw - 40px) * 9 / 16), calc(100vh - 110px));
-            overflow: hidden; /* Clips the unscaled oversized layout boundary */
+            overflow: hidden; 
         }}
 
         iframe {{
             position: absolute;
             top: 0;
             left: 0;
-            width: 1280px;  /* Fixed high-res base canvas width */
-            height: 720px;  /* Fixed high-res base canvas height */
+            width: 1920px;  /* Upgraded to full high-res desktop baseline width */
+            height: 1080px; /* Upgraded to full high-res desktop baseline height */
             border: none !important;
             display: block !important;
-            transform-origin: top left; /* Anchor scaling to upper-left corner */
+            transform-origin: top left; 
         }}
     </style>
 </head>
@@ -220,7 +220,7 @@ def generate_arcade():
 
         function sendResizeToGame() {{
             const rect = wrapper.getBoundingClientRect();
-            const baseVirtualWidth = 1280;
+            const baseVirtualWidth = 1920; // Matches upgraded iframe width
             
             // Calculate scale vector ratio based on viewport bounding constraints
             const scaleFactor = rect.width / baseVirtualWidth;
@@ -231,8 +231,8 @@ def generate_arcade():
             if (iframe.contentWindow) {{
                 iframe.contentWindow.postMessage({{
                     type: 'ARCADE_RESIZE_COMMAND',
-                    width: rect.width,
-                    height: rect.height
+                    width: 1920,
+                    height: 1080
                 }}, '*');
             }}
         }}
