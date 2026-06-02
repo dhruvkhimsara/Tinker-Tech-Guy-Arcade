@@ -35,9 +35,6 @@ jobs:
           mkdir site
           cp -r "Gaming Website/Games" site/
           cp "Gaming Website/UI/index.html" site/index.html
-          cp "Gaming Website/robots.txt" site/robots.txt
-          cp "Gaming Website/sitemap.xml" site/sitemap.xml
-          cp "Gaming Website/google6f920147f1ae0719.html" site/google6f920147f1ae0719.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
