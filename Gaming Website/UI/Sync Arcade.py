@@ -19,7 +19,7 @@ def generate_arcade():
         
         card_html = f"""            <div class="game-card" onclick="launchGame('{relative_path}')">
                 <div class="game-title">{display_title}</div>
-                <button class="btn-launch">Launch Engine</button>
+                <button class="btn-launch">PLAY</button>
             </div>"""
         card_elements.append(card_html)
 
@@ -29,7 +29,7 @@ def generate_arcade():
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -48,6 +48,7 @@ def generate_arcade():
 
         * {{
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }}
 
         body {{
@@ -59,6 +60,7 @@ def generate_arcade():
             display: flex;
             flex-direction: column;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
             user-select: none;
         }}
@@ -97,13 +99,15 @@ def generate_arcade():
             color: var(--accent-green);
         }}
 
+        /* Dynamic Fluid Flex Layout - Enforces Max 5 per row & centers remaining cards */
         #browse-view {{
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 50px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            padding: 40px 20px;
             width: 100%;
-            max-width: 1600px;
+            max-width: 1550px; /* Perfectly bounds 5 columns maximum */
             margin: 0 auto;
             overflow-y: auto;
             align-content: start;
@@ -115,13 +119,16 @@ def generate_arcade():
             border-radius: 16px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(20% - 20px); /* 5 items per row configuration base */
+            min-width: 260px;       /* Forces smart responsive wrapping on smaller screens/phones */
+            max-width: 290px;
             aspect-ratio: 16 / 10;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;    
-            padding: 30px;
-            gap: 15px;
+            padding: 24px;
+            gap: 18px;
         }}
 
         .game-card:hover {{
@@ -132,32 +139,38 @@ def generate_arcade():
         }}
 
         .game-title {{
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 800;
             letter-spacing: 1px;
             text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }}
 
         .btn-launch {{
             background: transparent;
             border: 1px solid var(--border-color);
             color: var(--accent-green);
-            padding: 10px 20px;
+            padding: 10px 28px;
             border-radius: 8px;
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             transition: all 0.2s ease;
             cursor: pointer;
         }}
 
         .game-card:hover .btn-launch {{
-            background-color: rgba(0, 255, 136, 0.1);
+            background-color: var(--accent-green);
             border-color: var(--accent-green);
+            color: #000000;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
         }}
 
-        /* --- FULL VIEWPORT GAME VIEW --- */
+        /* --- FULL LIQUID GAME PORTAL --- */
         #play-view {{
             display: none;
             position: fixed;
@@ -198,7 +211,7 @@ def generate_arcade():
             z-index: 600;
             backdrop-filter: blur(6px);
             transition: all 0.2s ease;
-            opacity: 0.15; /* Highly transparent during active gameplay */
+            opacity: 0.15;
         }}
 
         #floating-escape-btn:hover {{
@@ -207,7 +220,7 @@ def generate_arcade():
             border-color: var(--accent-green);
             background-color: var(--panel-dark);
             box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
-            padding-bottom: 10px; /* Slight expansion animation on hover */
+            padding-bottom: 10px;
         }}
 
         /* --- ESCAPE MENU MODAL OVERLAY --- */
@@ -374,7 +387,7 @@ def generate_arcade():
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Updated fullscreen view layout in index.html.")
+    print(f"Arcade sync successful! Configured layout tracking architecture in index.html.")
 
 if __name__ == '__main__':
     generate_arcade()
