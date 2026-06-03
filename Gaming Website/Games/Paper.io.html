@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper.io</title>
+    <style>
+        :root {
+            --bg-black: #0b111e;
+            --accent-primary: #00ff88;
+            --accent-danger: #ff3366;
+            --panel-grey: #141923;
+            --text-muted: #8492a6;
+            --border-color: #2c3545;
+            --grid-line: #1a2333;
+        }
+
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #game-wrapper {
+            width: min(100vw, calc(100vh * 16 / 9));
+            height: min(100vh, calc(100vw * 9 / 16));
+            background-color: var(--bg-black);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #canvas-container {
+            flex: 1;
+            background-color: var(--bg-black);
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(11, 17, 30, 0.94);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        .title {
+            font-size: 6rem;
+            font-weight: 900;
+            color: var(--accent-primary);
+            letter-spacing: 4px;
+            text-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+
+        .highscore-badge {
+            background-color: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 35px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+            width: 500px;
+        }
+
+        .input-group label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center;
+        }
+
+        .input-group input {
+            background-color: var(--panel-grey);
+            border: 2px solid var(--border-color);
+            color: #ffffff;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .difficulty-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        .difficulty-button {
+            background-color: var(--panel-grey);
+            border: 2px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 16px 0;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .difficulty-button:hover {
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+
+        .difficulty-button.active {
+            background-color: rgba(0, 255, 136, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .controls-card {
+            background-color: var(--panel-grey);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            width: 460px;
+            margin-bottom: 35px;
+            text-align: center;
+        }
+
+        .controls-card h4 {
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .controls-card p {
+            margin: 6px 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .controls-card span {
+            color: var(--accent-primary);
+            font-weight: 800;
+        }
+
+        .launch-button {
+            background-color: transparent;
+            border: 3px solid var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 18px 70px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+        }
+
+        .launch-button:hover {
+            background-color: var(--accent-primary);
+            color: #000000;
+            box-shadow: 0 0 35px rgba(0, 255, 136, 0.5);
+        }
+
+        #death-screen {
+            display: none;
+            background-color: rgba(10, 5, 5, 0.96);
+        }
+
+        #death-screen .title {
+            color: var(--accent-danger);
+            text-shadow: 0 0 30px rgba(255, 51, 102, 0.5);
+        }
+
+        .stats-box {
+            color: #ffffff;
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        #hud-leaderboard {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background-color: rgba(20, 25, 35, 0.9);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            width: 320px;
+            color: #ffffff;
+            z-index: 50;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .hud-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .leaderboard-entry.player {
+            color: var(--accent-primary);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="hud-leaderboard">
+            <div class="hud-title">Territory Control</div>
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <div id="menu-screen" class="overlay">
+            <div class="title">PAPER.IO</div>
+            <div class="subtitle">Territorial Conquest</div>
+            
+            <div id="menu-highscore-display" class="highscore-badge">Best Record: 0.00%</div>
+            
+            <div class="input-group">
+                <label for="username-input">Enter Identification</label>
+                <input type="text" id="username-input" maxlength="12" placeholder="" value="">
+            </div>
+
+            <div class="input-group">
+                <label>Artificial Intelligence Difficulty</label>
+                <div class="difficulty-grid">
+                    <button class="difficulty-button active" onclick="setMatchDifficulty('easy')">Easy</button>
+                    <button class="difficulty-button" onclick="setMatchDifficulty('medium')">Medium</button>
+                    <button class="difficulty-button" onclick="setMatchDifficulty('hard')">Hard</button>
+                    <button class="difficulty-button" onclick="setMatchDifficulty('insane')">Insane</button>
+                </div>
+            </div>
+
+            <div class="controls-card">
+                <h4>Navigation Systems</h4>
+                <p>Primary: <span>360° Mouse Tracking</span></p>
+                <p>Override: <span>Arrow Keys (4-Directional)</span></p>
+            </div>
+
+            <button class="launch-button" onclick="initializeArena()">Start</button>
+        </div>
+
+        <div id="death-screen" class="overlay">
+            <div class="title">ELIMINATED</div>
+            <div class="stats-box" id="final-score-display">Territory Captured: 0.00%</div>
+            <button class="launch-button" onclick="returnToMenu()" style="border-color: var(--accent-danger); color: var(--accent-danger);">Return to Menu</button>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </div>
+
+<script>
+    // --- Engine Configuration ---
+    const canvas = document.getElementById('gameCanvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 1920;
+    canvas.height = 1080;
+
+    const menuScreen = document.getElementById('menu-screen');
+    const deathScreen = document.getElementById('death-screen');
+    const leaderboardHUD = document.getElementById('hud-leaderboard');
+    const usernameInput = document.getElementById('username-input');
+    const finalScoreDisplay = document.getElementById('final-score-display');
+    const leaderboardList = document.getElementById('leaderboard-list');
+    const menuHighscoreDisplay = document.getElementById('menu-highscore-display');
+
+    // Architecture Configurations - DOUBLED ARENA SIZE
+    const CELL_SIZE = 12; 
+    const MAP_WIDTH = 7200;
+    const MAP_HEIGHT = 7200;
+    const GRID_COLUMNS = Math.floor(MAP_WIDTH / CELL_SIZE);
+    const GRID_ROWS = Math.floor(MAP_HEIGHT / CELL_SIZE);
+    const TOTAL_CELLS = GRID_COLUMNS * GRID_ROWS;
+    const ZOOM_LEVEL = 1.4; 
+
+    const GAME_REAL_SPEED = 3.1; 
+
+    let gridData = new Uint16Array(TOTAL_CELLS); 
+    let territoryCanvas = document.createElement('canvas');
+    territoryCanvas.width = MAP_WIDTH;
+    territoryCanvas.height = MAP_HEIGHT;
+    let territoryContext = territoryCanvas.getContext('2d');
+territoryContext.lineJoin = 'round';
+territoryContext.lineCap = 'round';
+territoryContext.imageSmoothingEnabled = true;
+
+    let activePlayers = [];
+    let activeParticles = []; 
+    let floatingScores = []; // Array holding active percentage increase text alerts
+    let localPlayer = null;
+    let gameIsRunning = false;
+    let selectedDifficulty = 'easy';
+
+    // Hardware Input Tracking
+    let mouseCoordinates = { x: 1920 / 2, y: 1080 / 2 };
+    let keyboardState = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    let botNamesDatabase = ["Alpha", "Vector", "Phantom", "Apex", "Matrix", "Hydra", "Neon", "Specter", "Quantum", "Shadow", "Rogue", "Blaze", "Titan", "Cyclops", "Gizmo", "Omega", "Viper", "Echo", "Atlas", "Orion"];
+
+    const COLOR_PALETTE = [
+        { main: '#00ff88', dark: '#00cc6e' }, { main: '#ff3366', dark: '#cc2451' },
+        { main: '#38bdf8', dark: '#2599cb' }, { main: '#a855f7', dark: '#843ec7' },
+        { main: '#f97316', dark: '#cb5a0f' }, { main: '#eab308', dark: '#bd9004' },
+        { main: '#ec4899', dark: '#bd3377' }, { main: '#14b8a6', dark: '#0e9485' },
+        { main: '#ef4444', dark: '#bf3232' }, { main: '#8b5cf6', dark: '#6d43cb' }
+    ];
+
+    function loadStoredHighscore() {
+        let stored = localStorage.getItem('paperio_highscore_percent');
+        if (stored) {
+            menuHighscoreDisplay.innerText = `Best Record: ${parseFloat(stored).toFixed(2)}%`;
+        } else {
+            menuHighscoreDisplay.innerText = `Best Record: 0.00%`;
+        }
+    }
+
+    function checkAndSaveHighscore(finalPercent) {
+        let stored = localStorage.getItem('paperio_highscore_percent');
+        let currentRecord = stored ? parseFloat(stored) : 0;
+        if (finalPercent > currentRecord) {
+            localStorage.setItem('paperio_highscore_percent', finalPercent.toString());
+        }
+    }
+
+    function setMatchDifficulty(mode) {
+        selectedDifficulty = mode;
+        const buttons = document.querySelectorAll('.difficulty-button');
+        buttons.forEach(button => button.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    class BurstParticle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            let speed = Math.random() * 3 + 1.5; 
+            let angle = Math.random() * Math.PI * 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.size = Math.random() * 5 + 5;
+            this.alpha = 1.0;
+            this.decay = Math.random() * 0.02 + 0.015;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vx *= 0.96; 
+            this.vy *= 0.96;
+            this.alpha -= this.decay;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+            ctx.restore();
+        }
+    }
+
+    // Floating text indicator structure showing percentage gains fading out in 1 second
+    class FloatingPercentageNotification {
+        constructor(startX, startY, textGainedValue) {
+            this.x = startX;
+            this.y = startY - 35; // Positioned directly over the player's nametag banner
+            this.textValue = `+${textGainedValue.toFixed(2)}%`;
+            this.alpha = 1.0;
+            this.speedY = 0.55;  // Slow vertical ascending transition
+            this.lifespan = 60;  // Lasts roughly 1 second at 60 frames per second
+            this.initialLifespan = 60;
+        }
+        update() {
+            this.y -= this.speedY;
+            this.lifespan--;
+            this.alpha = this.lifespan / this.initialLifespan;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.fillStyle = '#ffffff'; // Pristine white text matching requested profile
+            ctx.font = 'bold 18px -apple-system, sans-serif';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+            ctx.shadowBlur = 4;
+            ctx.textAlign = 'center';
+            ctx.fillText(this.textValue, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    function createDeathBurst(x, y, color) {
+        for (let i = 0; i < 40; i++) {
+            activeParticles.push(new BurstParticle(x, y, color));
+        }
+    }
+
+    
+function trailCollisionHit(trailSet, index) {
+    if (trailSet.has(index)) return true;
+
+    const row = Math.floor(index / GRID_COLUMNS);
+    const col = index % GRID_COLUMNS;
+
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = row + dr;
+            const nc = col + dc;
+            if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLUMNS) continue;
+            if (trailSet.has(nr * GRID_COLUMNS + nc)) return true;
+        }
+    }
+    return false;
+}
+
+class Competitor {
+        constructor(id, startX, startY, name, isBot, aiTier = 0, colorTheme) {
+            this.identifier = id;
+            this.name = name;
+            this.isBot = isBot;
+            this.aiTier = aiTier; 
+            this.colorMain = colorTheme.main;
+            this.colorDark = colorTheme.dark;
+
+            this.x = startX;
+            this.y = startY;
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = GAME_REAL_SPEED; 
+            this.size = 24; 
+            this.isAlive = true;
+            this.score = 0; 
+
+            this.trailCoordinates = []; 
+            this.trailCells = []; 
+            this.trailCellsSet = new Set(); 
+            this.isOutsideBase = false;
+
+            this.aiMode = 'wander'; 
+            this.targetAngle = this.angle;
+            this.decisionTimer = 0;
+            this.turnDirection = Math.random() > 0.5 ? 1 : -1;
+            this.stepsOut = 0;
+            this.homeX = startX;
+            this.homeY = startY;
+
+            this.establishInitialBase(startX, startY);
+        }
+
+        establishInitialBase(originX, originY) {
+            let centerCol = Math.floor(originX / CELL_SIZE);
+            let centerRow = Math.floor(originY / CELL_SIZE);
+            let radius = 8;
+
+            for (let rowOffset = -radius; rowOffset <= radius; rowOffset++) {
+                for (let colOffset = -radius; colOffset <= radius; colOffset++) {
+                    let c = centerCol + colOffset;
+                    let r = centerRow + rowOffset;
+                    if (c >= 0 && c < GRID_COLUMNS && r >= 0 && r < GRID_ROWS) {
+                        if (Math.hypot(colOffset, rowOffset) <= radius) {
+                            gridData[r * GRID_COLUMNS + c] = this.identifier;
+                        }
+                    }
+                }
+            }
+            this.rebuildTerritorySurface();
+        }
+
+        rebuildTerritorySurface() {
+            territoryContext.fillStyle = this.colorMain;
+            let counter = 0;
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (gridData[i] === this.identifier) {
+                    counter++;
+                    let c = i % GRID_COLUMNS;
+                    let r = Math.floor(i / GRID_COLUMNS);
+                    territoryContext.beginPath();
+                    territoryContext.arc(
+                        c * CELL_SIZE + CELL_SIZE / 2, 
+                        r * CELL_SIZE + CELL_SIZE / 2, 
+                        CELL_SIZE * 0.74, 
+                        0, Math.PI * 2
+                    );
+                    territoryContext.fill();
+                }
+            }
+            this.score = (counter / TOTAL_CELLS) * 100;
+        }
+
+        updatePosition(currentTime) {
+            if (!this.isAlive) return;
+
+            this.processNavigation(currentTime);
+
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed;
+
+            if (this.x < 0 || this.x > MAP_WIDTH || this.y < 0 || this.y > MAP_HEIGHT) {
+                this.executeElimination();
+                return;
+            }
+
+            this.evaluateGridState();
+        }
+
+        processNavigation(currentTime) {
+            if (!this.isBot) {
+                let overrideActive = false;
+                
+                if (keyboardState.ArrowRight) { this.targetAngle = 0; overrideActive = true; }
+                else if (keyboardState.ArrowDown) { this.targetAngle = Math.PI / 2; overrideActive = true; }
+                else if (keyboardState.ArrowLeft) { this.targetAngle = Math.PI; overrideActive = true; }
+                else if (keyboardState.ArrowUp) { this.targetAngle = -Math.PI / 2; overrideActive = true; }
+
+                if (!overrideActive) {
+                    let screenCenterX = canvas.width / 2;
+                    let screenCenterY = canvas.height / 2;
+                    let deltaX = mouseCoordinates.x - screenCenterX;
+                    let deltaY = mouseCoordinates.y - screenCenterY;
+                    
+                    if (Math.hypot(deltaX, deltaY) > 10) {
+                        this.targetAngle = Math.atan2(deltaY, deltaX);
+                    }
+                }
+
+                let angularDifference = this.targetAngle - this.angle;
+                angularDifference = Math.atan2(Math.sin(angularDifference), Math.cos(angularDifference));
+                this.angle += angularDifference * 0.22;
+            } else {
+                this.processArtificialIntelligence(currentTime);
+                let angularDifference = this.targetAngle - this.angle;
+                angularDifference = Math.atan2(Math.sin(angularDifference), Math.cos(angularDifference));
+                
+                let turnSpeed = 0.08;
+                if (this.aiTier === 2) turnSpeed = 0.12;
+                if (this.aiTier === 3) turnSpeed = 0.18;
+                if (this.aiTier === 4) turnSpeed = 0.28; 
+
+                this.angle += angularDifference * turnSpeed;
+            }
+        }
+
+        processArtificialIntelligence(currentTime) {
+            if (currentTime < this.decisionTimer) return;
+            
+            let deliberationRate = 350 - (this.aiTier * 70); 
+            this.decisionTimer = currentTime + deliberationRate + Math.random() * 80;
+
+            let cCol = Math.floor(this.x / CELL_SIZE);
+            let cRow = Math.floor(this.y / CELL_SIZE);
+            let cIdx = cRow * GRID_COLUMNS + cCol;
+            let insideOwnBase = gridData[cIdx] === this.identifier;
+
+            if (insideOwnBase) {
+                this.stepsOut = 0;
+                this.homeX = this.x;
+                this.homeY = this.y;
+                this.targetAngle = Math.random() * Math.PI * 2;
+            } else {
+                this.stepsOut++;
+                
+                let maximumOutboundSteps = 10; 
+                if (this.aiTier === 2) maximumOutboundSteps = 16; 
+                if (this.aiTier === 3) maximumOutboundSteps = 35; 
+                if (this.aiTier === 4) maximumOutboundSteps = 55; 
+
+                if (this.stepsOut > maximumOutboundSteps) {
+                    this.targetAngle = Math.atan2(this.homeY - this.y, this.homeX - this.x);
+                } else {
+                    if (this.aiTier <= 2) {
+                        this.targetAngle += this.turnDirection * 0.45;
+                    } else {
+                        if (Math.random() < 0.15) {
+                            this.targetAngle += this.turnDirection * 0.6;
+                        }
+                    }
+                }
+            }
+
+            let margin = 250; 
+            if (this.x < margin || this.x > MAP_WIDTH - margin || this.y < margin || this.y > MAP_HEIGHT - margin) {
+                this.targetAngle = Math.atan2(MAP_HEIGHT / 2 - this.y, MAP_WIDTH / 2 - this.x);
+            }
+        }
+
+        evaluateGridState() {
+            let col = Math.floor(this.x / CELL_SIZE);
+            let row = Math.floor(this.y / CELL_SIZE);
+            let index = row * GRID_COLUMNS + col;
+
+            if (col < 0 || col >= GRID_COLUMNS || row < 0 || row >= GRID_ROWS) return;
+
+            let satisfiesOwnership = gridData[index] === this.identifier;
+
+            if (!satisfiesOwnership) {
+                this.isOutsideBase = true;
+                this.trailCoordinates.push({ x: this.x, y: this.y });
+
+                if (this.trailCellsSet.has(index)) {
+                    let recentTolerance = 3;
+                    let hitSelf = false;
+                    for (let i = 0; i < this.trailCells.length - recentTolerance; i++) {
+                        if (this.trailCells[i] === index) {
+                            hitSelf = true;
+                            break;
+                        }
+                    }
+                    if (hitSelf) {
+                        this.executeElimination();
+                        return;
+                    }
+                }
+
+                if (!this.trailCellsSet.has(index)) {
+                    this.trailCells.push(index);
+                    this.trailCellsSet.add(index);
+                }
+
+                for (let opponent of activePlayers) {
+                    if (opponent === this || !opponent.isAlive) continue;
+                    if (trailCollisionHit(opponent.trailCellsSet, index)) {
+                        opponent.executeElimination();
+                    }
+                }
+            } else {
+                if (this.isOutsideBase && this.trailCells.length > 0) {
+                    this.executeTerritoryCapture();
+                }
+                this.isOutsideBase = false;
+                this.trailCoordinates = [];
+                this.trailCells = [];
+                this.trailCellsSet.clear();
+                this.turnDirection = Math.random() > 0.5 ? 1 : -1;
+            }
+        }
+
+        executeTerritoryCapture() {
+            let oldScoreValue = this.score; // Record pre-capture value to evaluate precise gains
+            let traceLookup = new Set(this.trailCells);
+            let processedTracker = new Uint8Array(TOTAL_CELLS);
+            let processingQueue = [];
+
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (gridData[i] === this.identifier || traceLookup.has(i)) {
+                    processedTracker[i] = 2; 
+                }
+            }
+
+            for (let c = 0; c < GRID_COLUMNS; c++) {
+                if (processedTracker[c] === 0) { processedTracker[c] = 1; processingQueue.push(c); }
+                let bIdx = (GRID_ROWS - 1) * GRID_COLUMNS + c;
+                if (processedTracker[bIdx] === 0) { processedTracker[bIdx] = 1; processingQueue.push(bIdx); }
+            }
+            for (let r = 0; r < GRID_ROWS; r++) {
+                let lIdx = r * GRID_COLUMNS;
+                if (processedTracker[lIdx] === 0) { processedTracker[lIdx] = 1; processingQueue.push(lIdx); }
+                let rIdx = r * GRID_COLUMNS + (GRID_COLUMNS - 1);
+                if (processedTracker[rIdx] === 0) { processedTracker[rIdx] = 1; processingQueue.push(rIdx); }
+            }
+
+            let qCursor = 0;
+            while (qCursor < processingQueue.length) {
+                let curr = processingQueue[qCursor++];
+                let c = curr % GRID_COLUMNS;
+                let r = Math.floor(curr / GRID_COLUMNS);
+
+                let sideNodes = [
+                    { cc: c, cr: r - 1 }, { cc: c, cr: r + 1 },
+                    { cc: c - 1, cr: r }, { cc: c + 1, cr: r }
+                ];
+
+                for (let node of sideNodes) {
+                    if (node.cc >= 0 && node.cc < GRID_COLUMNS && node.cr >= 0 && node.cr < GRID_ROWS) {
+                        let targetIndex = node.cr * GRID_COLUMNS + node.cc;
+                        if (processedTracker[targetIndex] === 0) {
+                            processedTracker[targetIndex] = 1; 
+                            processingQueue.push(targetIndex);
+                        }
+                    }
+                }
+            }
+
+            let capturedSum = 0;
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (processedTracker[i] === 0 || processedTracker[i] === 2) {
+                    gridData[i] = this.identifier;
+                    capturedSum++;
+                }
+            }
+
+            this.score = (capturedSum / TOTAL_CELLS) * 100;
+            let absoluteGainedPercent = this.score - oldScoreValue;
+
+            // Trigger white fading alert if actual territory growth occurred
+            if (absoluteGainedPercent > 0.001) {
+                floatingScores.push(new FloatingPercentageNotification(this.x, this.y, absoluteGainedPercent));
+            }
+            
+            if (this === localPlayer) {
+                checkAndSaveHighscore(this.score);
+            }
+            
+            redrawAllTerritoriesGlobal();
+        }
+
+        executeElimination() {
+            this.isAlive = false;
+            
+            createDeathBurst(this.x, this.y, this.colorMain);
+
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                if (gridData[i] === this.identifier) {
+                    gridData[i] = 0;
+                }
+            }
+
+            redrawAllTerritoriesGlobal();
+
+            if (this === localPlayer) {
+                checkAndSaveHighscore(this.score);
+                setTimeout(() => { triggerPostGameInterface(); }, 1200);
+            } else {
+                setTimeout(() => {
+                    if (!gameIsRunning) return;
+                    maintainArenaPopulation();
+                }, 5000);
+            }
+        }
+
+        renderGraphics(drawContext) {
+            if (!this.isAlive) return;
+
+            if (this.trailCoordinates.length > 0) {
+                drawContext.strokeStyle = this.colorDark;
+                drawContext.lineWidth = this.size - 2; 
+                drawContext.lineCap = 'round';
+                drawContext.lineJoin = 'round';
+                drawContext.beginPath();
+                drawContext.moveTo(this.trailCoordinates[0].x, this.trailCoordinates[0].y);
+                for (let i = 1; i < this.trailCoordinates.length; i++) {
+                    drawContext.lineTo(this.trailCoordinates[i].x, this.trailCoordinates[i].y);
+                }
+                drawContext.lineTo(this.x, this.y);
+                drawContext.stroke();
+            }
+
+            drawContext.lineWidth = 2.5;
+            drawContext.strokeStyle = '#050508';
+            drawContext.fillStyle = this.colorMain;
+            drawContext.fillRect(this.x - (this.size / 2), this.y - (this.size / 2), this.size, this.size);
+            drawContext.strokeRect(this.x - (this.size / 2), this.y - (this.size / 2), this.size, this.size);
+
+            drawContext.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            drawContext.font = 'bold 14px -apple-system, sans-serif';
+            drawContext.textAlign = 'center';
+            drawContext.fillText(this.name, this.x, this.y - 18);
+        }
+    }
+
+    function redrawAllTerritoriesGlobal() {
+        territoryContext.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+        
+        for (let p of activePlayers) {
+            if (p.isAlive) {
+                territoryContext.fillStyle = p.colorMain;
+                for (let i = 0; i < TOTAL_CELLS; i++) {
+                    if (gridData[i] === p.identifier) {
+                        let c = i % GRID_COLUMNS;
+                        let r = Math.floor(i / GRID_COLUMNS);
+                        territoryContext.beginPath();
+                        territoryContext.arc(
+                            c * CELL_SIZE + CELL_SIZE / 2, 
+                            r * CELL_SIZE + CELL_SIZE / 2, 
+                            CELL_SIZE * 0.74, 
+                            0, Math.PI * 2
+                        );
+                        territoryContext.fill();
+                    }
+                }
+            }
+        }
+    }
+
+    let entityIdCounter = 1;
+
+    function spawnArtificialIntelligence(tierLevel) {
+        let padding = 800; 
+        let startX = Math.random() * (MAP_WIDTH - padding * 2) + padding;
+        let startY = Math.random() * (MAP_HEIGHT - padding * 2) + padding;
+        
+        let label = "Unknown";
+        if (tierLevel === 1) label = "Easy Bot";
+        if (tierLevel === 2) label = "Med Bot";
+        if (tierLevel === 3) label = "Hard Bot";
+        if (tierLevel === 4) label = "Insane Bot";
+
+        let tag = botNamesDatabase[Math.floor(Math.random() * botNamesDatabase.length)] + ` (${label})`;
+        let theme = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
+        
+        activePlayers.push(new Competitor(entityIdCounter++, startX, startY, tag, true, tierLevel, theme));
+    }
+
+    function maintainArenaPopulation() {
+        activePlayers = activePlayers.filter(p => p.isAlive);
+        
+        while (activePlayers.length < 10) {
+            let selectedTier = 1;
+            if (selectedDifficulty === 'easy') selectedTier = 1;
+            else if (selectedDifficulty === 'medium') selectedTier = Math.random() < 0.4 ? 1 : 2;
+            else if (selectedDifficulty === 'hard') selectedTier = Math.random() < 0.3 ? 2 : 3;
+            else if (selectedDifficulty === 'insane') selectedTier = Math.random() < 0.2 ? 3 : 4;
+
+            spawnArtificialIntelligence(selectedTier);
+        }
+    }
+
+    function initializeArena() {
+        let requestedName = usernameInput.value.trim();
+        if (!requestedName) requestedName = "Player 1";
+
+        menuScreen.style.display = 'none';
+        deathScreen.style.display = 'none';
+        leaderboardHUD.style.display = 'block';
+
+        gridData.fill(0);
+        territoryContext.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+        activePlayers = [];
+        activeParticles = [];
+        floatingScores = [];
+        entityIdCounter = 1;
+
+        localPlayer = new Competitor(
+            entityIdCounter++, 
+            MAP_WIDTH / 2, MAP_HEIGHT / 2, 
+            requestedName, false, 0, COLOR_PALETTE[0]
+        );
+        activePlayers.push(localPlayer);
+
+        maintainArenaPopulation();
+
+        gameIsRunning = true;
+        requestAnimationFrame(executeMainFrameTick);
+    }
+
+    function executeMainFrameTick(timestamp) {
+        if (!gameIsRunning) return;
+
+        for (let player of activePlayers) {
+            player.updatePosition(timestamp);
+        }
+
+        for (let i = activeParticles.length - 1; i >= 0; i--) {
+            activeParticles[i].update();
+            if (activeParticles[i].alpha <= 0) {
+                activeParticles.splice(i, 1);
+            }
+        }
+
+        // Processing lifecycle ticks for text overlays
+        for (let i = floatingScores.length - 1; i >= 0; i--) {
+            floatingScores[i].update();
+            if (floatingScores[i].lifespan <= 0) {
+                floatingScores.splice(i, 1);
+            }
+        }
+
+        activePlayers = activePlayers.filter(p => p.isAlive);
+
+        refreshLeaderboardUI();
+
+        context.fillStyle = '#0b111e';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.save();
+        
+        context.translate(canvas.width / 2, canvas.height / 2);
+        context.scale(ZOOM_LEVEL, ZOOM_LEVEL);
+        
+        let targetCamX = localPlayer ? localPlayer.x : MAP_WIDTH / 2;
+        let targetCamY = localPlayer ? localPlayer.y : MAP_HEIGHT / 2;
+        context.translate(-targetCamX, -targetCamY);
+
+        context.strokeStyle = 'rgba(26, 35, 51, 0.4)';
+        context.lineWidth = 1;
+        context.beginPath();
+        for (let x = 0; x <= MAP_WIDTH; x += CELL_SIZE) {
+            context.moveTo(x, 0); context.lineTo(x, MAP_HEIGHT);
+        }
+        for (let y = 0; y <= MAP_HEIGHT; y += CELL_SIZE) {
+            context.moveTo(0, y); context.lineTo(MAP_WIDTH, y);
+        }
+        context.stroke();
+
+        context.drawImage(territoryCanvas, 0, 0);
+
+        context.strokeStyle = '#2c3545';
+        context.lineWidth = 12;
+        context.strokeRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+        for (let player of activePlayers) {
+            player.renderGraphics(context);
+        }
+
+        for (let particle of activeParticles) {
+            particle.draw(context);
+        }
+
+        // Render notifications inside the camera's spatial coordinates
+        for (let scoreTxt of floatingScores) {
+            scoreTxt.draw(context);
+        }
+
+        context.restore();
+
+        requestAnimationFrame(executeMainFrameTick);
+    }
+
+    function refreshLeaderboardUI() {
+        let sortedLeaders = [...activePlayers].sort((a, b) => b.score - a.score);
+        leaderboardList.innerHTML = '';
+
+        sortedLeaders.slice(0, 10).forEach((entity, ranking) => {
+            let rowItem = document.createElement('div');
+            rowItem.className = 'leaderboard-entry' + (entity === localPlayer ? ' player' : '');
+            rowItem.innerHTML = `<span>${ranking + 1}. ${entity.name}</span><span>${entity.score.toFixed(2)}%</span>`;
+            leaderboardList.appendChild(rowItem);
+        });
+    }
+
+    function triggerPostGameInterface() {
+        gameIsRunning = false;
+        leaderboardHUD.style.display = 'none'; 
+        finalScoreDisplay.innerText = `Territory Captured: ${localPlayer.score.toFixed(2)}%`;
+        deathScreen.style.display = 'flex';
+    }
+
+    function returnToMenu() {
+        deathScreen.style.display = 'none';
+        menuScreen.style.display = 'flex';
+        loadStoredHighscore(); 
+    }
+
+    window.addEventListener('mousemove', event => {
+        let boundingRectangle = canvas.getBoundingClientRect();
+        mouseCoordinates.x = event.clientX - boundingRectangle.left;
+        mouseCoordinates.y = event.clientY - boundingRectangle.top;
+    });
+
+    window.addEventListener('keydown', event => {
+        if (event.key in keyboardState) {
+            keyboardState[event.key] = true;
+        }
+    });
+
+    window.addEventListener('keyup', event => {
+        if (event.key in keyboardState) {
+            keyboardState[event.key] = false;
+        }
+    });
+
+    canvas.addEventListener('contextmenu', event => event.preventDefault());
+
+    
+function getUniqueBotColor(playerColor, palette) {
+    const available = palette.filter(c => c !== playerColor);
+    return available[Math.floor(Math.random() * available.length)];
+}
+
+
+function assignUniqueColors(players, colorPalette) {
+    const pool = [...colorPalette];
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    players.forEach((p, idx) => {
+        if (idx < pool.length) p.color = pool[idx];
+    });
+}
+
+
+function getShuffledColorPool() {
+    const colors = ['#00ff66','#ff5252','#4285f4','#ffb300','#ab47bc','#26c6da','#ec407a','#8bc34a'];
+    for (let i = colors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+    return colors;
+}
+const __GAME_COLOR_POOL = getShuffledColorPool();
+
+window.onload = () => {
+        loadStoredHighscore();
+    };
+
+</script>
+</body>
+</html>
