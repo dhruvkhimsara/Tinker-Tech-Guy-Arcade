@@ -1,8 +1,46 @@
 import os
+import re
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GAMES_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'Games'))
 INDEX_FILE = os.path.join(SCRIPT_DIR, 'index.html')
+
+def clean_game_title(file_name):
+    """
+    Intelligently cleans raw file names into beautiful, pleasing display titles.
+    """
+    # Strip extension and isolate raw text string
+    raw_title = os.path.splitext(file_name)[0]
+    
+    # 1. SPECIAL OVERRIDES DICTIONARY
+    # Add any highly specific, compound, or uniquely punctuated names here
+    custom_overrides = {
+        "bitlife": "BitLife",
+        "agario": "Agar.io",
+        "10minutestilldawn": "10 Minutes Till Dawn",
+        "1v1": "1v1.LOL",
+        "1v1.lol": "1v1.LOL",
+        "eaglercraft": "Eaglercraft",
+        "smashkarts": "Smash Karts",
+        "drift hunters": "Drift Hunters"
+    }
+    
+    # Check if the fully lowered name exists in our customized list
+    lookup_key = raw_title.lower().strip()
+    if lookup_key in custom_overrides:
+        return custom_overrides[lookup_key]
+        
+    # 2. ALGORITHMIC FALLBACK MECHANISM
+    # Replace all underscores and hyphens with clean spaces
+    processed = re.sub(r'[-_]+', ' ', raw_title)
+    
+    # Insert smart spaces between squished letters and numbers (e.g., vex7 -> Vex 7)
+    processed = re.sub(r'([a-zA-Z])([0-9])', r'\1 \2', processed)
+    processed = re.sub(r'([0-9])([a-zA-Z])', r'\1 \2', processed)
+    
+    # Standardize spacing anomalies and convert to beautiful Title Case
+    processed = " ".join(processed.split())
+    return processed.title()
 
 def generate_arcade():
     if not os.path.exists(GAMES_DIR):
@@ -14,7 +52,8 @@ def generate_arcade():
 
     card_elements = []
     for file_name in game_files:
-        display_title = os.path.splitext(file_name)[0]
+        # Pass filename into the parsing engine
+        display_title = clean_game_title(file_name)
         relative_path = f"Games/{file_name}"
         
         card_html = f"""            <div class="game-card" onclick="launchGame('{relative_path}')">
@@ -99,7 +138,7 @@ def generate_arcade():
             color: var(--accent-green);
         }}
 
-        /* Dynamic Fluid Flex Layout - Enforces Max 5 per row & centers remaining cards */
+        /* Dynamic Fluid Layout: max 5 items per row, beautifully balances remainders */
         #browse-view {{
             display: flex;
             flex-wrap: wrap;
@@ -107,7 +146,7 @@ def generate_arcade():
             gap: 25px;
             padding: 40px 20px;
             width: 100%;
-            max-width: 1550px; /* Perfectly bounds 5 columns maximum */
+            max-width: 1550px; 
             margin: 0 auto;
             overflow-y: auto;
             align-content: start;
@@ -119,8 +158,8 @@ def generate_arcade():
             border-radius: 16px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            width: calc(20% - 20px); /* 5 items per row configuration base */
-            min-width: 260px;       /* Forces smart responsive wrapping on smaller screens/phones */
+            width: calc(20% - 20px); 
+            min-width: 260px;       
             max-width: 290px;
             aspect-ratio: 16 / 10;
             display: flex;
@@ -139,9 +178,9 @@ def generate_arcade():
         }}
 
         .game-title {{
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 800;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
@@ -170,7 +209,7 @@ def generate_arcade():
             box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
         }}
 
-        /* --- FULL LIQUID GAME PORTAL --- */
+        /* --- LIQUID RESPONSIVE VIEWER --- */
         #play-view {{
             display: none;
             position: fixed;
@@ -191,7 +230,7 @@ def generate_arcade():
             display: block;
         }}
 
-        /* Top-Center Stealth Dropdown Menu Button */
+        /* Non-intrusive Top Stealth Dropdown Button */
         #floating-escape-btn {{
             position: absolute;
             top: 0;
@@ -387,7 +426,7 @@ def generate_arcade():
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Configured layout tracking architecture in index.html.")
+    print(f"Arcade sync successful! Compiled file auto-formatting parsing nodes into index.html.")
 
 if __name__ == '__main__':
     generate_arcade()
