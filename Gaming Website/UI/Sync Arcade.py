@@ -1,46 +1,8 @@
 import os
-import re
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GAMES_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'Games'))
 INDEX_FILE = os.path.join(SCRIPT_DIR, 'index.html')
-
-def clean_game_title(file_name):
-    """
-    Intelligently cleans raw file names into beautiful, pleasing display titles.
-    """
-    # Strip extension and isolate raw text string
-    raw_title = os.path.splitext(file_name)[0]
-    
-    # 1. SPECIAL OVERRIDES DICTIONARY
-    # Add any highly specific, compound, or uniquely punctuated names here
-    custom_overrides = {
-        "bitlife": "BitLife",
-        "agario": "Agar.io",
-        "10minutestilldawn": "10 Minutes Till Dawn",
-        "1v1": "1v1.LOL",
-        "1v1.lol": "1v1.LOL",
-        "eaglercraft": "Eaglercraft",
-        "smashkarts": "Smash Karts",
-        "drift hunters": "Drift Hunters"
-    }
-    
-    # Check if the fully lowered name exists in our customized list
-    lookup_key = raw_title.lower().strip()
-    if lookup_key in custom_overrides:
-        return custom_overrides[lookup_key]
-        
-    # 2. ALGORITHMIC FALLBACK MECHANISM
-    # Replace all underscores and hyphens with clean spaces
-    processed = re.sub(r'[-_]+', ' ', raw_title)
-    
-    # Insert smart spaces between squished letters and numbers (e.g., vex7 -> Vex 7)
-    processed = re.sub(r'([a-zA-Z])([0-9])', r'\1 \2', processed)
-    processed = re.sub(r'([0-9])([a-zA-Z])', r'\1 \2', processed)
-    
-    # Standardize spacing anomalies and convert to beautiful Title Case
-    processed = " ".join(processed.split())
-    return processed.title()
 
 def generate_arcade():
     if not os.path.exists(GAMES_DIR):
@@ -52,11 +14,12 @@ def generate_arcade():
 
     card_elements = []
     for file_name in game_files:
-        # Pass filename into the parsing engine
-        display_title = clean_game_title(file_name)
+        # Simply grab the exact filename without the .html extension
+        display_title = os.path.splitext(file_name)[0]
         relative_path = f"Games/{file_name}"
         
-        card_html = f"""            <div class="game-card" onclick="launchGame('{relative_path}')">
+        # Data-title is still stored in lowercase for the search engine to work smoothly
+        card_html = f"""            <div class="game-card" data-title="{display_title.lower()}" onclick="launchGame('{relative_path}')">
                 <div class="game-title">{display_title}</div>
                 <button class="btn-launch">PLAY</button>
             </div>"""
@@ -110,45 +73,84 @@ def generate_arcade():
             flex-direction: column;
             height: 100%;
             width: 100%;
-            background: radial-gradient(circle at center, #111114 0%, var(--bg-dark) 100%);
+            background: radial-gradient(circle at top, #111116 0%, var(--bg-dark) 100%);
+            overflow-y: auto;
         }}
 
-        header {{
-            background-color: var(--panel-dark);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 30px;
-            height: 80px;
+        /* Integrated Cool Cinematic Branding Section */
+        .arcade-hero {{
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;        
+            padding: 60px 20px 20px 20px;
+            text-align: center;
             flex-shrink: 0;
-            z-index: 100;
         }}
 
         .logo {{
-            font-size: 1.6rem;
+            font-size: 2.8rem;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 6px;
             color: var(--text-main);
+            margin: 0 0 25px 0;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
         }}
 
         .logo span {{
             color: var(--accent-green);
         }}
 
-        /* Dynamic Fluid Layout: max 5 items per row, beautifully balances remainders */
+        /* Centered High-Tech Search Interface */
+        .search-wrapper {{
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }}
+
+        .search-bar {{
+            width: 100%;
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 14px 25px;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 600;
+            outline: none;
+            text-align: center;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }}
+
+        .search-bar:focus {{
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 4px 25px rgba(0, 0, 0, 0.5);
+            background-color: #17171a;
+        }}
+
+        .search-bar::placeholder {{
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }}
+
+        /* Dynamic Fluid Matrix Layout */
         #browse-view {{
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 25px;
-            padding: 40px 20px;
+            padding: 30px 20px 60px 20px;
             width: 100%;
             max-width: 1550px; 
             margin: 0 auto;
-            overflow-y: auto;
             align-content: start;
         }}
 
@@ -157,17 +159,26 @@ def generate_arcade():
             border: 1px solid var(--border-color);
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s, background-color 0.2s, opacity 0.25s ease, visibility 0.25s;
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
-            aspect-ratio: 16 / 10;
+            min-height: 180px; /* Swapped aspect-ratio for min-height to allow text wrapping safely */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;    
             padding: 24px;
             gap: 18px;
+            opacity: 1;
+            visibility: visible;
+        }}
+
+        /* Instant Hide Utility for Dynamic Filter Engine */
+        .game-card.hidden {{
+            display: none;
+            opacity: 0;
+            visibility: hidden;
         }}
 
         .game-card:hover {{
@@ -182,10 +193,10 @@ def generate_arcade():
             font-weight: 800;
             letter-spacing: 0.5px;
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             width: 100%;
+            white-space: normal; /* Allows text to wrap */
+            overflow-wrap: break-word; /* Breaks exceptionally long words if needed */
+            line-height: 1.3;
         }}
 
         .btn-launch {{
@@ -200,6 +211,7 @@ def generate_arcade():
             letter-spacing: 2px;
             transition: all 0.2s ease;
             cursor: pointer;
+            margin-top: auto; /* Pushes the button to the bottom evenly */
         }}
 
         .game-card:hover .btn-launch {{
@@ -230,7 +242,6 @@ def generate_arcade():
             display: block;
         }}
 
-        /* Non-intrusive Top Stealth Dropdown Button */
         #floating-escape-btn {{
             position: absolute;
             top: 0;
@@ -344,9 +355,12 @@ def generate_arcade():
 <body>
 
     <div id="dashboard-container">
-        <header>
+        <div class="arcade-hero">
             <div class="logo">Tinker Tech Guy's <span>Arcade</span></div>
-        </header>
+            <div class="search-wrapper">
+                <input type="text" id="game-search" class="search-bar" placeholder="Search Catalog..." autocomplete="off">
+            </div>
+        </div>
 
         <div id="browse-view">
 {all_cards_string}
@@ -374,8 +388,24 @@ def generate_arcade():
         const playView = document.getElementById('play-view');
         const iframe = document.getElementById('arcade-processor');
         const pauseOverlay = document.getElementById('pause-overlay');
+        const searchBar = document.getElementById('game-search');
+        const gameCards = document.querySelectorAll('.game-card');
 
         let isGameRunning = false;
+
+        // --- Client-Side Search Processing Engine ---
+        searchBar.addEventListener('input', (e) => {{
+            const filterValue = e.target.value.toLowerCase().trim();
+            
+            gameCards.forEach(card => {{
+                const gameTitle = card.getAttribute('data-title');
+                if (gameTitle.includes(filterValue)) {{
+                    card.classList.remove('hidden');
+                }} else {{
+                    card.classList.add('hidden');
+                }}
+            }});
+        }});
 
         function launchGame(gameFilePath) {{
             dashboardContainer.style.display = 'none';
@@ -406,6 +436,10 @@ def generate_arcade():
             playView.style.display = 'none';
             dashboardContainer.style.display = 'flex';
             isGameRunning = false;
+            
+            setTimeout(() => {{
+                searchBar.focus();
+            }}, 50);
         }}
 
         window.addEventListener('keydown', (e) => {{
@@ -426,7 +460,7 @@ def generate_arcade():
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Compiled file auto-formatting parsing nodes into index.html.")
+    print(f"Arcade sync successful! Removed auto-formatting and updated word wrapping.")
 
 if __name__ == '__main__':
     generate_arcade()
