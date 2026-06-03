@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Lane</title>
+    <style>
+        :root {
+            --bg-black: #050505;
+            --accent-green: #00ff88; /* Reverted to exact Highway Racer neon green */
+            --panel-grey: #141416;
+            --text-muted: #a1a1aa;
+            --border-color: #27272a;
+        }
+
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-wrapper {
+            width: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: var(--bg-black);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #game-header {
+            height: 90px;
+            background-color: var(--panel-grey);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .score-box {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .score-box span {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-left: 8px;
+        }
+
+        #hi-score-val {
+            color: var(--accent-green) !important;
+        }
+
+        #menu-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            width: 90%;
+        }
+
+        #menu-overlay h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin: 0 0 15px 0;
+            letter-spacing: 3px;
+        }
+
+        #menu-overlay p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.2rem;
+            color: #000000; /* Changed to solid black */
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 800;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+
+        #canvas-container {
+            flex: 1;
+            background-color: var(--bg-black);
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            background-color: var(--bg-black);
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="game-header">
+            <div class="score-box">BEST DISTANCE<span id="hi-score-val">0</span></div>
+            <div class="score-box">METERS SURVIVED<span id="score-val">0</span></div>
+        </div>
+
+        <div id="canvas-container">
+            <div id="menu-overlay">
+                <h1 id="main-title">HORSE LANE</h1>
+                <p id="sub-title">Use W/S or UP/DOWN to change tracks. Press SPACE to start.</p>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const mainTitle = document.getElementById('main-title');
+    const subTitle = document.getElementById('sub-title');
+    const scoreVal = document.getElementById('score-val');
+    const hiScoreVal = document.getElementById('hi-score-val');
+
+    let gameActive = false;
+    let isGameOver = false;
+    let score = 0;
+    let highScore = 0;
+    
+    const initialSpeed = 12;
+    let gameSpeed = initialSpeed;
+
+    const lanes = 5;
+    const laneHeight = 130;
+    const roadHeight = lanes * laneHeight;
+    let roadStartY = 0; 
+    let lineOffset = 0; 
+
+    // Horizontal sizes
+    const horseW = 125;
+    const horseH = 75;
+    const player = { lane: 2, x: 120 }; 
+    let obstacles = [];
+    let spawnTimer = 0;
+    let particles = [];
+    let legCycle = 0; 
+
+    function initCanvasSize() {
+        canvas.width = 1918;
+        canvas.height = 986;
+        roadStartY = (canvas.height - roadHeight) / 2;
+    }
+
+    function loadHighScore() {
+        const saved = localStorage.getItem('horse_lane_highscore');
+        if (saved) {
+            highScore = parseInt(saved, 10);
+            hiScoreVal.innerText = highScore;
+        }
+    }
+
+    function saveHighScore() {
+        if (score > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('horse_lane_highscore', highScore);
+            hiScoreVal.innerText = highScore;
+        }
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (!gameActive) restartGame();
+        }
+        
+        if (gameActive && !isGameOver) {
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+                if (player.lane > 0) player.lane--;
+            }
+            if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
+                if (player.lane < lanes - 1) player.lane++;
+            }
+        }
+    });
+
+    function restartGame() {
+        score = 0;
+        gameSpeed = initialSpeed;
+        obstacles = [];
+        particles = [];
+        spawnTimer = 0;
+        player.lane = 2; 
+        isGameOver = false;
+        gameActive = true;
+        menuOverlay.style.display = 'none';
+    }
+
+    function triggerCrashState() {
+        gameActive = false;
+        isGameOver = true;
+        saveHighScore();
+        
+        let px = player.x + (horseW / 2);
+        let py = roadStartY + (player.lane * laneHeight) + (laneHeight / 2);
+        for (let i = 0; i < 40; i++) {
+            particles.push({
+                x: px, y: py,
+                vx: (Math.random() - 0.5) * 22,
+                vy: (Math.random() - 0.5) * 22,
+                size: Math.random() * 6 + 3,
+                color: Math.random() > 0.4 ? '#8b5a2b' : '#c4a482', 
+                life: 1.0
+            });
+        }
+
+        mainTitle.innerText = "CRASHED";
+        subTitle.innerText = "PRESS SPACE TO GALLOP AGAIN"; // CSS colors this subtitle black automatically
+        menuOverlay.style.display = 'block';
+    }
+
+    function spawnObstacle() {
+        let availableLanes = [0, 1, 2, 3, 4];
+        let numObstacles = Math.random() > 0.75 ? 2 : 1; 
+        
+        for(let i = 0; i < numObstacles; i++) {
+            let randIndex = Math.floor(Math.random() * availableLanes.length);
+            let chosenLane = availableLanes.splice(randIndex, 1)[0];
+            
+            obstacles.push({
+                lane: chosenLane,
+                x: canvas.width + horseW, 
+                speedMod: (Math.random() * 2) - 0.5,
+                type: Math.random() > 0.5 ? 'hurdle' : 'hay'
+            });
+        }
+    }
+
+    function updateSimulation() {
+        if (!gameActive) {
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; 
+                p.vx *= 0.94; p.vy *= 0.94; 
+                p.life -= 0.02;
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+            return;
+        }
+
+        score += 0.18;
+        scoreVal.innerText = Math.floor(score);
+        gameSpeed += 0.0035; 
+
+        lineOffset -= gameSpeed;
+        if (lineOffset < -100) lineOffset += 100;
+
+        legCycle += gameSpeed * 0.035;
+
+        spawnTimer--;
+        if (spawnTimer <= 0) {
+            spawnObstacle();
+            spawnTimer = Math.random() * 25 + Math.max(20, 80 - (gameSpeed * 1.6));
+        }
+
+        let pY = roadStartY + (player.lane * laneHeight) + (laneHeight / 2) - (horseH / 2);
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= (gameSpeed + obs.speedMod);
+
+            let oY = roadStartY + (obs.lane * laneHeight) + (laneHeight / 2) - (horseH / 2);
+
+            let hShrinkX = 14;
+            let hShrinkY = 10;
+            if (
+                player.x + hShrinkX < obs.x + horseW - hShrinkX &&
+                player.x + horseW - hShrinkX > obs.x + hShrinkX &&
+                pY + hShrinkY < oY + horseH - hShrinkY &&
+                pY + horseH - hShrinkY > oY + hShrinkY
+            ) {
+                triggerCrashState();
+            }
+
+            if (obs.x < -horseW - 50) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function drawDetailedHorse(ctx, x, y, isPlayer) {
+        ctx.save();
+        
+        const bodyColor = isPlayer ? '#8b5a2b' : '#a0522d'; 
+        const darkTrim = '#5c3a21'; 
+        const muzzleColor = '#d2b48c'; 
+        const hoofColor = '#222222';
+
+        let legSwingA = Math.sin(legCycle) * 16;
+        let legSwingB = Math.cos(legCycle) * 16;
+
+        // Smooth Rounded Legs Configuration
+        ctx.fillStyle = bodyColor;
+        ctx.beginPath(); ctx.roundRect(x + 88, y + 50, 10, 18 + legSwingA, 5); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 74, y + 50, 10, 18 - legSwingA, 5); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 36, y + 50, 10, 18 + legSwingB, 5); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 22, y + 50, 10, 18 - legSwingB, 5); ctx.fill();
+
+        // Rounded Hooves
+        ctx.fillStyle = hoofColor;
+        ctx.beginPath(); ctx.roundRect(x + 88, y + 65 + legSwingA, 10, 5, [0, 0, 3, 3]); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 74, y + 65 - legSwingA, 10, 5, [0, 0, 3, 3]); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 36, y + 65 + legSwingB, 10, 5, [0, 0, 3, 3]); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 22, y + 65 - legSwingB, 10, 5, [0, 0, 3, 3]); ctx.fill();
+
+        // Sleek, Rounded Torso
+        ctx.fillStyle = bodyColor;
+        ctx.beginPath();
+        ctx.roundRect(x + 20, y + 20, 82, 35, 16);
+        ctx.fill();
+
+        // Rounded and Curved Neck/Chest Linkage
+        ctx.save();
+        ctx.translate(x + 90, y + 26);
+        ctx.rotate(Math.PI / 3.8);
+        ctx.fillStyle = bodyColor;
+        ctx.beginPath();
+        ctx.roundRect(-22, -32, 22, 38, [10, 10, 0, 0]);
+        ctx.fill();
+        
+        // Rounded Head Structure
+        ctx.beginPath();
+        ctx.roundRect(-12, -45, 36, 18, 8);
+        ctx.fill();
+        
+        // Rounded Snout / Muzzle overlay
+        ctx.fillStyle = muzzleColor;
+        ctx.beginPath();
+        ctx.roundRect(10, -45, 14, 18, [0, 8, 8, 0]);
+        ctx.fill();
+        
+        // Curved Ears
+        ctx.fillStyle = darkTrim;
+        ctx.beginPath();
+        ctx.roundRect(-8, -53, 7, 11, [4, 4, 0, 0]);
+        ctx.fill();
+        ctx.restore();
+
+        // Curved Neat Mane
+        ctx.fillStyle = darkTrim;
+        ctx.beginPath(); ctx.roundRect(x + 76, y + 4, 14, 18, 6); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 58, y + 14, 20, 10, 5); ctx.fill();
+
+        // Rounded Flowing Tail
+        ctx.save();
+        ctx.translate(x + 20, y + 25);
+        ctx.rotate(Math.sin(legCycle * 0.5) * 0.18 - 0.1);
+        ctx.fillStyle = darkTrim;
+        ctx.beginPath();
+        ctx.roundRect(-15, 0, 15, 30, [10, 0, 10, 10]);
+        ctx.fill();
+        ctx.restore();
+
+        // Neat circular eye geometry
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(x + 101, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawThemeObstacle(ctx, obs, oY) {
+        ctx.save();
+        if (obs.type === 'hurdle') {
+            ctx.fillStyle = '#7c2d12'; 
+            ctx.fillRect(obs.x + 10, oY + 45, 12, 30);
+            ctx.fillRect(obs.x + horseW - 22, oY + 45, 12, 30);
+            
+            ctx.fillStyle = '#f8fafc'; 
+            ctx.fillRect(obs.x, oY + 20, horseW, 12);
+            ctx.fillRect(obs.x, oY + 36, horseW, 10);
+            
+            ctx.fillStyle = '#b91c1c'; 
+            ctx.fillRect(obs.x + 25, oY + 20, 15, 12);
+            ctx.fillRect(obs.x + 85, oY + 20, 15, 12);
+            ctx.fillRect(obs.x + 25, oY + 36, 15, 10);
+            ctx.fillRect(obs.x + 85, oY + 36, 15, 10);
+        } else {
+            ctx.fillStyle = '#eab308';
+            ctx.beginPath();
+            ctx.roundRect(obs.x + 15, oY + 15, horseW - 30, 55, 6);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ca8a04';
+            ctx.fillRect(obs.x + 35, oY + 25, 4, 35);
+            ctx.fillRect(obs.x + 60, oY + 25, 4, 35);
+            ctx.fillRect(obs.x + 85, oY + 25, 4, 35);
+        }
+        ctx.restore();
+    }
+
+    function drawScreen() {
+        ctx.fillStyle = '#1e1b18'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#c4a482';
+        ctx.fillRect(0, roadStartY, canvas.width, roadHeight);
+        
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(0, roadStartY - 6, canvas.width, 6);
+        ctx.fillRect(0, roadStartY + roadHeight, canvas.width, 6);
+
+        ctx.strokeStyle = '#a68059';
+        ctx.lineWidth = 5;
+        ctx.setLineDash([40, 60]);
+        for (let i = 1; i < lanes; i++) {
+            let lineY = roadStartY + (i * laneHeight);
+            ctx.beginPath();
+            ctx.moveTo(lineOffset, lineY);
+            ctx.lineTo(canvas.width + 100, lineY);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]); 
+
+        obstacles.forEach(obs => {
+            let oY = roadStartY + (obs.lane * laneHeight) + (laneHeight / 2) - (horseH / 2);
+            drawThemeObstacle(ctx, obs, oY);
+        });
+
+        if (!isGameOver) {
+            let pY = roadStartY + (player.lane * laneHeight) + (laneHeight / 2) - (horseH / 2);
+            drawDetailedHorse(ctx, player.x, pY, true);
+        }
+
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        ctx.globalAlpha = 1.0;
+    }
+
+    function loop() {
+        updateSimulation();
+        drawScreen();
+        requestAnimationFrame(loop);
+    }
+
+    window.onload = () => {
+        initCanvasSize();
+        loadHighScore();
+        loop();
+    };
+</script>
+</body>
+</html>
