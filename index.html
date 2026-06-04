@@ -6,7 +6,7 @@
     <title>HTML Runner</title>
     <style>
         :root {
-            --bg-dark: #050505;
+            --bg-dark: #09090b;
             --panel-dark: #141416;
             --border-color: #27272a;
             --text-main: #ffffff;
@@ -21,41 +21,77 @@
             height: 100vh;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
         }
 
-        /* --- BLANK SETUP SCREEN --- */
-        #setup-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
+        * {
+            box-sizing: border-box;
         }
 
-        .box {
+        /* --- DASHBOARD VIEW (Scrollable wrapper for the setup elements) --- */
+        #dashboard-view {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            padding: clamp(15px, 4vw, 40px);
+            overflow-y: auto;
+        }
+
+        /* --- TOP CONTROL LAUNCHER --- */
+        .launcher-panel {
             background-color: var(--panel-dark);
-            padding: 40px;
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            width: 90%;
-            max-width: 450px;
+            padding: clamp(20px, 3vw, 35px);
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto clamp(20px, 4vw, 40px) auto;
+            text-align: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+        }
+
+        .launcher-panel h2 {
+            margin: 0 0 10px 0;
+            font-size: clamp(1.4rem, 2.5vw, 2rem);
+            letter-spacing: 1px;
+            font-weight: 800;
+        }
+
+        .launcher-panel p {
+            color: var(--text-muted);
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+            margin: 0 0 20px 0;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* Responsive horizontal layout on larger displays */
+        @media (min-width: 480px) {
+            .input-group {
+                flex-direction: row;
+                gap: 10px;
+            }
         }
 
         input {
-            width: 100%;
+            flex: 1;
             background: #000;
             color: #fff;
             border: 1px solid var(--border-color);
-            padding: 12px;
+            padding: 14px 18px;
             border-radius: 8px;
             font-size: 1rem;
-            margin-top: 15px;
-            box-sizing: border-box;
             outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
         }
 
         input:focus {
@@ -63,18 +99,62 @@
         }
 
         .btn {
-            display: inline-block;
             background: #fff;
             color: #000;
-            padding: 12px 30px;
+            padding: 14px 30px;
             border-radius: 8px;
             font-weight: bold;
-            margin-top: 15px;
+            font-size: 1rem;
             cursor: pointer;
             user-select: none;
+            transition: background 0.2s;
+            white-space: nowrap;
         }
 
-        /* --- GAME CONTAINER --- */
+        .btn:hover {
+            background: #e4e4e7;
+        }
+
+        /* --- STATIC DIRECTORY LISTING --- */
+        .directory-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .directory-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .directory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        /* Non-clickable, easy-to-read static list items */
+        .directory-item {
+            background-color: rgba(20, 20, 22, 0.4);
+            border: 1px dashed var(--border-color);
+            padding: 14px 16px;
+            border-radius: 8px;
+            color: #e4e4e7;
+            font-size: 0.95rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            user-select: text; /* Allows highlighting/copying if needed */
+        }
+
+        /* --- IMMERSIVE GAME VIEWER --- */
         #game-screen {
             display: none;
             position: absolute;
@@ -83,6 +163,7 @@
             width: 100vw;
             height: 100vh;
             background-color: #000;
+            z-index: 9998;
         }
 
         iframe {
@@ -92,7 +173,7 @@
             display: block;
         }
 
-        /* --- GLOWING RED EXIT BUTTON --- */
+        /* --- GLOWING RED EXIT TOGGLE --- */
         #exit-btn {
             position: absolute;
             top: 0;
@@ -126,13 +207,30 @@
 </head>
 <body>
 
-    <div id="setup-screen">
-        <div class="box">
-            <h2 style="margin:0; letter-spacing: 1px;">HTML RUNNER</h2>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-top: 10px;">Type the filename of the game inside your Games folder:</p>
-            <input type="text" id="game-input" placeholder="e.g., Slope.html" onkeydown="if(event.key==='Enter') launchFromInput()">
-            <div class="btn" onclick="launchFromInput()">LAUNCH</div>
+    <div id="dashboard-view">
+        
+        <div class="launcher-panel">
+            <h2>HTML RUNNER</h2>
+            <p>Type the name of a game below to launch it instantly</p>
+            <div class="input-group">
+                <input type="text" id="game-input" placeholder="e.g., Slope" onkeydown="if(event.key==='Enter') launchFromInput()">
+                <div class="btn" onclick="launchFromInput()">LAUNCH</div>
+            </div>
         </div>
+
+        <div class="directory-container">
+            <div class="directory-header">Available Games Registry</div>
+            <div class="directory-grid">
+                
+                <div class="directory-item">Geometry Dash</div>
+                <div class="directory-item">Slope</div>
+                <div class="directory-item">Retro Bowl</div>
+                <div class="directory-item">1v1.LOL</div>
+                <div class="directory-item">BitLife</div>
+                
+            </div>
+        </div>
+
     </div>
 
     <div id="game-screen">
@@ -142,11 +240,12 @@
 
     <script>
         const gameFrame = document.getElementById('game-frame');
-        const setupScreen = document.getElementById('setup-screen');
+        const dashboardView = document.getElementById('dashboard-view');
         const gameScreen = document.getElementById('game-screen');
+        const gameInput = document.getElementById('game-input');
 
-        // Automatically read the URL query parameter on page load
-        // Example: launcher.html?game=Slope.html
+        // Automatically read URL parameters on load 
+        // Example: runner/index.html?game=Slope
         const urlParams = new URLSearchParams(window.location.search);
         const gameParam = urlParams.get('game');
         
@@ -155,25 +254,32 @@
         }
 
         function launchFromInput() {
-            const gameName = document.getElementById('game-input').value.trim();
+            const gameName = gameInput.value.trim();
             if (gameName) loadGame(gameName);
         }
 
         function loadGame(filename) {
-            // Target the root Games folder natively
-            gameFrame.src = "Games/" + filename + "?t=" + new Date().getTime();
-            setupScreen.style.display = 'none';
+            // Clean up inputs and append .html automatically behind the scenes
+            let targetFile = filename;
+            if (!targetFile.toLowerCase().endsWith('.html') && !targetFile.toLowerCase().endsWith('.htm')) {
+                targetFile += '.html';
+            }
+            
+            // Inject source path targeting your root Games/ repository folder
+            gameFrame.src = "Games/" + targetFile + "?t=" + new Date().getTime();
+            dashboardView.style.display = 'none';
             gameScreen.style.display = 'block';
+            
             setTimeout(() => gameFrame.focus(), 100);
         }
 
         function exitGame() {
             gameFrame.src = "";
             gameScreen.style.display = 'none';
-            setupScreen.style.display = 'flex';
-            document.getElementById('game-input').value = "";
+            dashboardView.style.display = 'flex';
+            gameInput.value = "";
             
-            // Wipe the URL parameters cleanly without reloading the browser
+            // Clean browser query strings without creating a page reload loop
             if (window.location.search) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
