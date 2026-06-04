@@ -33,12 +33,12 @@ def build_index():
     <title>Workspace Core</title>
     <style>
         :root {{
-            --bg: #f8fafc;
-            --panel: #ffffff;
-            --border: #e2e8f0;
-            --text: #334155;
-            --text-light: #64748b;
-            --accent: #0f172a;
+            --bg: #09090b;
+            --panel: #141416;
+            --border: #27272a;
+            --text: #ffffff;
+            --text-light: #a1a1aa;
+            --accent: #2563eb;
         }}
 
         body, html {{
@@ -59,10 +59,10 @@ def build_index():
             background-color: var(--panel); border: 1px solid var(--border);
             border-radius: 8px; padding: 25px; width: 100%;
             max-width: 600px; margin: 0 auto 30px auto;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-shrink: 0;
         }}
 
-        .launcher-panel h2 {{ margin: 0 0 5px 0; font-size: 1.1rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .launcher-panel h2 {{ margin: 0 0 5px 0; font-size: 1.1rem; color: var(--text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
         .launcher-panel p {{ color: var(--text-light); font-size: 0.85rem; margin: 0 0 15px 0; }}
         .input-group {{ display: flex; flex-direction: column; gap: 10px; width: 100%; }}
 
@@ -71,17 +71,17 @@ def build_index():
         }}
 
         input {{
-            flex: 1; background: #fff; color: #000; border: 1px solid var(--border);
+            flex: 1; background: #000; color: #fff; border: 1px solid var(--border);
             padding: 10px 14px; border-radius: 6px; font-size: 0.9rem; outline: none; width: 100%;
         }}
-        input:focus {{ border-color: #94a3b8; }}
+        input:focus {{ border-color: var(--text-light); }}
 
         .btn {{
-            background: var(--accent); color: #fff; padding: 10px 24px; border-radius: 6px;
+            background: #fff; color: #000; padding: 10px 24px; border-radius: 6px;
             font-weight: 600; font-size: 0.9rem; cursor: pointer; user-select: none;
             text-align: center; white-space: nowrap; transition: background 0.1s;
         }}
-        .btn:hover {{ background: #1e293b; }}
+        .btn:hover {{ background: #e4e4e7; }}
 
         .directory-container {{ width: 100%; max-width: 1000px; margin: 0 auto; }}
         .directory-header {{
@@ -157,7 +157,7 @@ def build_index():
 
         function loadGame(filename) {{
             let targetFile = filename;
-            if (!targetFile.toLowerCase().endswith('.html') && !targetFile.toLowerCase().endswith('.htm')) {{
+            if (!targetFile.toLowerCase().endsWith('.html') && !targetFile.toLowerCase().endsWith('.htm')) {{
                 targetFile += '.html';
             }}
             gameFrame.src = "Games/" + targetFile + "?t=" + new Date().getTime();
@@ -182,7 +182,7 @@ def build_index():
 
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print("Clean workspace index built successfully.")
+    print("Clean dark workspace index built successfully.")
 
 if __name__ == '__main__':
     build_index()
