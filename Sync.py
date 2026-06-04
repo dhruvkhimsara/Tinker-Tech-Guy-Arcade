@@ -91,17 +91,29 @@ def build_index():
         .btn:hover {{ background: #e4e4e7; }}
 
         .directory-container {{ width: 100%; max-width: 1000px; margin: 0 auto; }}
+        
         .directory-header {{
             font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px;
             color: var(--text-muted); margin-bottom: 15px; border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px; font-weight: 700;
         }}
-        .directory-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }}
+        
+        .directory-grid {{ 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 12px; 
+        }}
 
         .directory-item {{
             background-color: rgba(20, 20, 22, 0.4); border: 1px dashed var(--border-color);
             padding: 14px 16px; border-radius: 8px; color: #e4e4e7; font-size: 0.95rem;
-            font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text;
+            font-weight: 500; user-select: text;
+            
+            /* Text wrapping fixes: content breaks cleanly and box auto-stretches */
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            height: auto;
         }}
 
         #game-screen {{ display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9998; }}
