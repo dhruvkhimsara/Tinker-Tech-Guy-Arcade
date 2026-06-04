@@ -134,7 +134,7 @@ def build_index():
         </div>
 
         <div class="directory-container">
-            <div class="directory-header">Available Games Registry</div>
+            <div class="directory-header">Available Games</div>
             <div class="directory-grid">
 {all_items_string}
             </div>
