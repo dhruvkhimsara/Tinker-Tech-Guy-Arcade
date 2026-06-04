@@ -1,9 +1,9 @@
-name: Deploy HTML RUNNER
+name: Deploy Website
 
 on:
   push:
     branches:
-      - main  # Change this to master if your default branch is named master
+      - main  # Change this to master if your default branch is master
 
 permissions:
   contents: read
@@ -24,13 +24,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
+      - name: Setup Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Directory Mapping Automation
+        run: python Sync.py
+
+      - name: Setup Pages Configuration
         uses: actions/configure-pages@v4
 
-      - name: Upload Artifacts
+      - name: Upload Complete Artifacts Bundle
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'  # This deploys your whole folder structure
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
