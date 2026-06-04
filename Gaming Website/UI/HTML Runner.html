@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Runner</title>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --panel-dark: #141416;
+            --border-color: #27272a;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --accent-red: #ef4444; /* Red accent for the exit button */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* --- BROWSE VIEW (The Grid of Games) --- */
+        #browse-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 35px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--text-muted);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- PLAY VIEW (The Fullscreen Iframe Screen) --- */
+        #play-view {
+            display: none; /* Hidden until a game card is clicked */
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* --- SEMI-TRANSPARENT RED EXIT BUTTON --- */
+        #exit-btn {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(20, 20, 22, 0.75);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            color: var(--text-muted);
+            padding: 6px 24px;
+            border-radius: 0 0 12px 12px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            z-index: 9999;
+            backdrop-filter: blur(6px);
+            transition: all 0.2s ease;
+            opacity: 0.15; /* Barely visible until hovered over */
+        }
+
+        #exit-btn:hover {
+            opacity: 1;
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+            background-color: rgba(20, 20, 22, 0.9);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="browse-view">
+        
+        <div class="game-card" onclick="launchGame('../Games/Geometry Dash.html')">
+            <div class="game-title">Geometry Dash</div>
+        </div>
+
+        <div class="game-card" onclick="launchGame('../Games/Fireboy and Watergirl.html')">
+            <div class="game-title">Fireboy and Watergirl</div>
+        </div>
+
+        <div class="game-card" onclick="launchGame('../Games/Retro Bowl.html')">
+            <div class="game-title">Retro Bowl</div>
+        </div>
+
+    </div>
+
+    <div id="play-view">
+        <button id="exit-btn" onclick="showBrowseView()">EXIT</button>
+        <iframe id="game-frame" src=""></iframe>
+    </div>
+
+    <script>
+        const browseView = document.getElementById('browse-view');
+        const playView = document.getElementById('play-view');
+        const iframe = document.getElementById('game-frame');
+
+        function launchGame(gameFilePath) {
+            // Appends a cache-busting timestamp string to guarantee the latest game data loads
+            iframe.src = gameFilePath + '?t=' + new Date().getTime();
+            
+            browseView.style.display = 'none';
+            playView.style.display = 'block';
+            
+            // Give the frame focus so key inputs function instantly
+            setTimeout(() => iframe.focus(), 100);
+        }
+
+        function showBrowseView() {
+            iframe.src = ""; // Completely unloads the game when you click exit
+            playView.style.display = 'none';
+            browseView.style.display = 'grid';
+        }
+    </script>
+
+</body>
+</html>
