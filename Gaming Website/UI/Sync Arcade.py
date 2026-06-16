@@ -37,7 +37,7 @@ def generate_arcade():
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     
-    <title>Tinker Tech Guy's Arcade</title>
+    <title>Tinker Tech Guy</title>
     <style>
         :root {{
             --bg-dark: #050505;
