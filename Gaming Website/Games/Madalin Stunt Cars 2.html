@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Screen Game</title>
+    <style>
+        /* Remove default margins and hide scrollbars */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Configure the iframe to fill the entire viewport */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Embedded game container with full capability permissions -->
+    <iframe 
+        src="https://www.madalingames.com/madalingames/wp-content/uploads/games/webgl/M/MSC2-WEBGL/index.html" 
+        allow="autoplay; fullscreen; keyboard; gamepad">
+    </iframe>
+
+</body>
+</html>
