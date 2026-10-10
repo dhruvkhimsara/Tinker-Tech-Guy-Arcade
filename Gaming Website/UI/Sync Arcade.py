@@ -74,12 +74,19 @@ def generate_arcade():
         }
 
         /* --- DASHBOARD WRAPPER --- */
+        /* Ambient color blobs give the CLEAR glass something colorful to refract through */
         #dashboard-container {
             display: flex;
             flex-direction: column;
             height: 100%;
             width: 100%;
-            background: radial-gradient(circle at top, #111116 0%, var(--bg-dark) 100%);
+            background:
+                radial-gradient(circle at 15% 15%, rgba(0, 255, 136, 0.22) 0%, transparent 32%),
+                radial-gradient(circle at 85% 55%, rgba(120, 80, 255, 0.20) 0%, transparent 38%),
+                radial-gradient(circle at 25% 85%, rgba(255, 80, 150, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 65% 10%, rgba(0, 180, 255, 0.16) 0%, transparent 32%),
+                radial-gradient(circle at 55% 45%, rgba(0, 255, 200, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at top, #111116 0%, var(--bg-dark) 100%);
             overflow-y: auto;
         }
 
@@ -118,8 +125,8 @@ def generate_arcade():
 
         .search-bar {
             width: 100%;
-            background-color: var(--panel-dark);
-            border: 1px solid var(--border-color);
+            background-color: rgba(20, 20, 22, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 30px;
             padding: 14px 25px;
             color: var(--text-main);
@@ -129,13 +136,17 @@ def generate_arcade():
             text-align: center;
             letter-spacing: 0.5px;
             transition: all 0.25s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
         .search-bar:focus {
-            border-color: var(--accent-green);
+            border-color: rgba(0, 255, 136, 0.6);
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 4px 25px rgba(0, 0, 0, 0.5);
-            background-color: #17171a;
+            background-color: rgba(23, 23, 26, 0.7);
         }
 
         .search-bar::placeholder {
@@ -160,33 +171,50 @@ def generate_arcade():
             align-content: start;
         }
 
-        /* --- APPLE LIQUID GLASS GAME CARD --- */
+        /* =========================================================
+           APPLE LIQUID GLASS GAME CARD
+           - Body: essentially transparent (clear, not frosted)
+           - Backdrop: minimal blur + heavy saturation/brightness so
+             the background is still visible and vibrant through it
+           - Edges: bright specular highlight top-left, dark shadow
+             bottom-right, simulating light hitting a glass pane
+           ========================================================= */
         .game-card {
             position: relative;
             overflow: hidden;
             
-            /* 1. Base Glass Material: A subtle, semi-transparent white tint. */
-            background: rgba(255, 255, 255, 0.08);
-
-            /* 2. Backdrop Filter: Blurs and saturates the background to create the "liquid" effect. */
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-
-            /* 3. Border: A very subtle, semi-transparent white line. */
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            /* CLEAR glass — near-zero tint so you see through it */
+            background: rgba(255, 255, 255, 0.03);
+            
+            /* Minimal blur keeps it CLEAR. High saturation + brightness
+               makes the colors behind it pop through like real glass. */
+            backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
+            -webkit-backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
+            
             border-radius: 28px;
+            border: none;
 
-            /* 4. Shadow Stack: Creates depth (thickness) and a specular highlight on the top edge. */
+            /* Layered shadows build the 3D glass slab:
+               - outer drop shadow (card floats above scene)
+               - 0 0 0 1px faint outer ring (glass edge)
+               - inset top-left highlights (light hitting top edge)
+               - inset bottom-right shadows (glass thickness/depth)
+               - inner ambient glow (light scattering inside glass) */
             box-shadow: 
-                /* Outer drop shadow for depth */
-                0 25px 50px -12px rgba(0, 0, 0, 0.5),
-                /* Inner top highlight (specular edge) */
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                /* Inner bottom shadow (thickness) */
-                inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+                0 20px 45px -12px rgba(0, 0, 0, 0.65),
+                0 0 0 1px rgba(255, 255, 255, 0.10),
+                inset 0 1px 0 rgba(255, 255, 255, 0.55),
+                inset 1px 0 0 rgba(255, 255, 255, 0.25),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.35),
+                inset -1px 0 1px rgba(0, 0, 0, 0.18),
+                inset 0 0 40px rgba(255, 255, 255, 0.04);
 
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: 
+                transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), 
+                background 0.45s ease, 
+                box-shadow 0.45s ease,
+                backdrop-filter 0.45s ease;
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
@@ -199,37 +227,46 @@ def generate_arcade():
             gap: 18px;
             opacity: 1;
             visibility: visible;
+            isolation: isolate;
         }
 
-        /* --- Specular Shine Reflection (The "Liquid" Swipe) --- */
+        /* Diagonal specular sweep — the "liquid" shine that glides across */
         .game-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -150%;
-            width: 100%;
-            height: 100%;
+            inset: -1px;
             background: linear-gradient(
-                90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.15), 
-                transparent
+                115deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.08) 42%,
+                rgba(255, 255, 255, 0.28) 50%,
+                rgba(255, 255, 255, 0.08) 58%,
+                transparent 70%
             );
-            transform: skewX(-20deg);
+            transform: translateX(-130%) skewX(-6deg);
+            transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
             pointer-events: none;
-            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1;
         }
 
-        /* Ambient Top Rim Highlight */
+        /* Static top-left corner specular (light source reflection) */
         .game-card::after {
             content: '';
             position: absolute;
             top: 0;
-            left: 12px;
-            right: 12px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+            left: 0;
+            width: 55%;
+            height: 55%;
+            background: radial-gradient(
+                circle at 0% 0%,
+                rgba(255, 255, 255, 0.22) 0%,
+                rgba(255, 255, 255, 0.06) 25%,
+                transparent 55%
+            );
+            border-radius: inherit;
             pointer-events: none;
+            z-index: 1;
+            opacity: 0.9;
         }
 
         /* Instant Hide Utility for Dynamic Filter Engine */
@@ -239,23 +276,39 @@ def generate_arcade():
             visibility: hidden;
         }
 
-        /* Hover: Intensify the glass effect and move the shine */
+        /* Hover — the glass lifts, gathers more light, and the shine sweeps */
         .game-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            background: rgba(255, 255, 255, 0.15); /* Slightly more opaque */
-            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-6px) scale(1.015);
+            background: rgba(255, 255, 255, 0.05);
             box-shadow: 
-                0 30px 60px -12px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5), /* Stronger highlight */
-                inset 0 -2px 4px rgba(0, 0, 0, 0.5),
-                0 0 30px rgba(0, 255, 136, 0.1);
+                0 30px 60px -15px rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(255, 255, 255, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.85),
+                inset 1px 0 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.45),
+                inset -1px 0 1px rgba(0, 0, 0, 0.25),
+                inset 0 0 50px rgba(255, 255, 255, 0.07),
+                0 0 35px rgba(0, 255, 136, 0.15);
         }
 
         .game-card:hover::before {
-            left: 150%;
+            transform: translateX(130%) skewX(-6deg);
         }
 
+        .game-card:hover::after {
+            opacity: 1;
+            background: radial-gradient(
+                circle at 0% 0%,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 25%,
+                transparent 55%
+            );
+        }
+
+        /* Content sits above the glass-effect pseudo-elements */
         .game-title {
+            position: relative;
+            z-index: 2;
             font-size: 1.3rem;
             font-weight: 800;
             letter-spacing: 0.5px;
@@ -264,11 +317,15 @@ def generate_arcade():
             white-space: normal; 
             overflow-wrap: break-word; 
             line-height: 1.3;
+            /* Slight text shadow so the CLEAR glass keeps text legible */
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.35);
         }
 
         .btn-launch {
-            background: transparent;
-            border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             color: var(--accent-green);
             padding: 10px 28px;
             border-radius: 8px;
@@ -276,16 +333,19 @@ def generate_arcade():
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             cursor: pointer;
-            margin-top: auto; 
+            margin-top: auto;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .game-card:hover .btn-launch {
             background-color: var(--accent-green);
             border-color: var(--accent-green);
             color: #000000;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         /* --- LIQUID RESPONSIVE VIEWER --- */
@@ -530,7 +590,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Updated game cards with Apple liquid-glass styles.")
+    print(f"Arcade sync successful! Updated game cards with clear Apple liquid-glass styles.")
 
 if __name__ == '__main__':
     generate_arcade()
