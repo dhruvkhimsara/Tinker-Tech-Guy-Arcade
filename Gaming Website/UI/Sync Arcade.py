@@ -160,20 +160,33 @@ def generate_arcade():
             align-content: start;
         }
 
-        /* Apple-Inspired Liquid Glass Game Card (Shiny Water/Glass Droplet Effect) */
+        /* --- APPLE LIQUID GLASS GAME CARD --- */
         .game-card {
             position: relative;
             overflow: hidden;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 22px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
-                        inset 0 1px 2px 0 rgba(255, 255, 255, 0.45), 
-                        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.35);
+            
+            /* 1. Base Glass Material: A subtle, semi-transparent white tint. */
+            background: rgba(255, 255, 255, 0.08);
+
+            /* 2. Backdrop Filter: Blurs and saturates the background to create the "liquid" effect. */
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+            /* 3. Border: A very subtle, semi-transparent white line. */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+
+            /* 4. Shadow Stack: Creates depth (thickness) and a specular highlight on the top edge. */
+            box-shadow: 
+                /* Outer drop shadow for depth */
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                /* Inner top highlight (specular edge) */
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                /* Inner bottom shadow (thickness) */
+                inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+
             cursor: pointer;
-            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.35s, background 0.35s, box-shadow 0.35s, opacity 0.25s ease, visibility 0.25s;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
@@ -188,7 +201,7 @@ def generate_arcade():
             visibility: visible;
         }
 
-        /* Specular Liquid Shine Reflection Swipe */
+        /* --- Specular Shine Reflection (The "Liquid" Swipe) --- */
         .game-card::before {
             content: '';
             position: absolute;
@@ -199,11 +212,12 @@ def generate_arcade():
             background: linear-gradient(
                 90deg, 
                 transparent, 
-                rgba(255, 255, 255, 0.2), 
+                rgba(255, 255, 255, 0.15), 
                 transparent
             );
             transform: skewX(-20deg);
             pointer-events: none;
+            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         /* Ambient Top Rim Highlight */
@@ -225,19 +239,20 @@ def generate_arcade():
             visibility: hidden;
         }
 
+        /* Hover: Intensify the glass effect and move the shine */
         .game-card:hover {
-            transform: translateY(-6px) scale(1.01);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.06) 100%);
-            border-color: rgba(255, 255, 255, 0.45);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 
-                        inset 0 1px 3px 0 rgba(255, 255, 255, 0.7), 
-                        inset 0 -2px 5px 0 rgba(0, 0, 0, 0.4),
-                        0 0 30px rgba(0, 255, 136, 0.18);
+            transform: translateY(-8px) scale(1.02);
+            background: rgba(255, 255, 255, 0.15); /* Slightly more opaque */
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 30px 60px -12px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5), /* Stronger highlight */
+                inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(0, 255, 136, 0.1);
         }
 
         .game-card:hover::before {
             left: 150%;
-            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .game-title {
