@@ -160,12 +160,16 @@ def generate_arcade():
             align-content: start;
         }
 
+        /* Apple-Inspired Liquid Glass Game Card */
         .game-card {
-            background-color: var(--panel-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s, background-color 0.2s, opacity 0.25s ease, visibility 0.25s;
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s, background-color 0.3s, box-shadow 0.3s, opacity 0.25s ease, visibility 0.25s;
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
@@ -189,9 +193,9 @@ def generate_arcade():
 
         .game-card:hover {
             transform: translateY(-5px);
-            border-color: var(--accent-green);
-            background-color: rgba(0, 255, 136, 0.02);
-            box-shadow: 0 12px 30px rgba(0, 255, 136, 0.1);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 25px rgba(0, 255, 136, 0.15);
         }
 
         .game-title {
