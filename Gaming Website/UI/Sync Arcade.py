@@ -160,16 +160,20 @@ def generate_arcade():
             align-content: start;
         }
 
-        /* Apple-Inspired Liquid Glass Game Card */
+        /* Apple-Inspired Liquid Glass Game Card (Shiny Water/Glass Droplet Effect) */
         .game-card {
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 22px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+                        inset 0 1px 2px 0 rgba(255, 255, 255, 0.45), 
+                        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.35);
             cursor: pointer;
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s, background-color 0.3s, box-shadow 0.3s, opacity 0.25s ease, visibility 0.25s;
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.35s, background 0.35s, box-shadow 0.35s, opacity 0.25s ease, visibility 0.25s;
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
@@ -184,6 +188,36 @@ def generate_arcade():
             visibility: visible;
         }
 
+        /* Specular Liquid Shine Reflection Swipe */
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent
+            );
+            transform: skewX(-20deg);
+            pointer-events: none;
+        }
+
+        /* Ambient Top Rim Highlight */
+        .game-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 12px;
+            right: 12px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+            pointer-events: none;
+        }
+
         /* Instant Hide Utility for Dynamic Filter Engine */
         .game-card.hidden {
             display: none;
@@ -192,10 +226,18 @@ def generate_arcade():
         }
 
         .game-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 25px rgba(0, 255, 136, 0.15);
+            transform: translateY(-6px) scale(1.01);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.06) 100%);
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 
+                        inset 0 1px 3px 0 rgba(255, 255, 255, 0.7), 
+                        inset 0 -2px 5px 0 rgba(0, 0, 0, 0.4),
+                        0 0 30px rgba(0, 255, 136, 0.18);
+        }
+
+        .game-card:hover::before {
+            left: 150%;
+            transition: left 0.7s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .game-title {
@@ -473,7 +515,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Removed auto-formatting and updated word wrapping.")
+    print(f"Arcade sync successful! Updated game cards with Apple liquid-glass styles.")
 
 if __name__ == '__main__':
     generate_arcade()
