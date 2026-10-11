@@ -476,6 +476,16 @@ def generate_arcade():
             -webkit-backdrop-filter: none;
         }
 
+        body.performance-mode #dashboard-container {
+            background: #050505 !important;
+        }
+        body.performance-mode .game-card {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: #141416 !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        }
+
         #fps-overlay { display: none; position: absolute; top: 15px; left: 15px; color: #fff; font-family: monospace; font-size: 13px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; z-index: 650; }
     </style>
 </head>
@@ -484,7 +494,7 @@ def generate_arcade():
     <a href="https://www.youtube.com/channel/UCJNCidDM_s1lz9sKx80EQMw" target="_blank" class="top-left-link">Visit YouTube Channel</a>
     <div class="top-right-settings-btn" onclick="openSettingsModal()" title="Settings">
         <svg viewBox="0 0 24 24">
-            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.3L5.24,5.34c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.88 C2.62,9.08,2.67,9.35,2.86,9.5l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.3L5.24,5.34c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.88 C2.62,9.08,2.67,9.35,2.86,9.5l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c-0.5,0.38-1.03,0.7-1.62-0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
         </svg>
     </div>
 
@@ -530,6 +540,10 @@ def generate_arcade():
 
                 <div class="settings-group">
                     <div class="settings-group-title">Performance & Monitoring</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Performance Mode (Low-Spec)</span>
+                        <label class="switch"><input type="checkbox" id="performance-toggle" onchange="togglePerformanceMode(this)"><span class="slider"></span></label>
+                    </div>
                     <div class="setting-item">
                         <span class="setting-label">Overlay Framerate (FPS)</span>
                         <label class="switch"><input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)"><span class="slider"></span></label>
@@ -740,6 +754,11 @@ __CARDS_PLACEHOLDER__
         function toggleHighContrast(checkbox) {
             if (checkbox.checked) document.body.classList.add('high-contrast');
             else document.body.classList.remove('high-contrast');
+        }
+
+        function togglePerformanceMode(checkbox) {
+            if (checkbox.checked) document.body.classList.add('performance-mode');
+            else document.body.classList.remove('performance-mode');
         }
 
         function toggleFpsSetting(checkbox) {
@@ -1130,7 +1149,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! All features and bug fixes integrated.")
+    print("Arcade sync successful! Performance mode toggle restored.")
 
 if __name__ == '__main__':
     generate_arcade()
