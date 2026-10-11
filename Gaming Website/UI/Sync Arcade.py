@@ -477,9 +477,224 @@ def generate_arcade():
             background-color: rgba(239, 68, 68, 0.1);
             color: #ef4444;
         }
+
+        /* --- NEW UI ELEMENTS STYLING --- */
+        .top-left-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-left-link:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.08);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .top-right-settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-right-settings-btn:hover {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.08);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .top-right-settings-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-main);
+            transition: fill 0.25s ease, transform 0.5s ease;
+        }
+
+        .top-right-settings-btn:hover svg {
+            fill: var(--accent-green);
+            transform: rotate(90deg);
+        }
+
+        /* Settings Modal */
+        #settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(5, 5, 5, 0.85);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .settings-box {
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .settings-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .settings-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .settings-close:hover {
+            color: var(--text-main);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* iOS-style Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #27272a;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* FPS Overlay Style */
+        #fps-overlay {
+            display: none;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 650;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
+
+    <a href="https://www.youtube.com/channel/UCJNCidDM_s1lz9sKx80EQMw" target="_blank" class="top-left-link">Click Here To Visit My YouTube Channel</a>
+    <div class="top-right-settings-btn" onclick="openSettingsModal()" title="Settings">
+        <svg viewBox="0 0 24 24">
+            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.3L5.24,5.34c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.88 C2.62,9.08,2.67,9.35,2.86,9.5l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+        </svg>
+    </div>
+
+    <div id="settings-modal">
+        <div class="settings-box">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="settings-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Overlay Framerate</span>
+                <label class="switch">
+                    <input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
 
     <div id="dashboard-container">
         <div class="arcade-hero">
@@ -495,6 +710,7 @@ __CARDS_PLACEHOLDER__
     </div>
 
     <div id="play-view">
+        <div id="fps-overlay">FPS: --</div>
         <button id="floating-escape-btn" onclick="openPauseMenu()">Hub Menu</button>
         <iframe id="arcade-processor" src="" allowfullscreen="true" scrolling="no"></iframe>
     </div>
@@ -517,8 +733,65 @@ __CARDS_PLACEHOLDER__
         const pauseOverlay = document.getElementById('pause-overlay');
         const searchBar = document.getElementById('game-search');
         const gameCards = document.querySelectorAll('.game-card');
+        const settingsModal = document.getElementById('settings-modal');
+        const fpsToggle = document.getElementById('fps-toggle');
+        const fpsOverlay = document.getElementById('fps-overlay');
 
         let isGameRunning = false;
+        let showFps = false;
+        let fpsInterval = null;
+
+        function openSettingsModal() {
+            settingsModal.style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            settingsModal.style.display = 'none';
+        }
+
+        function toggleFpsSetting(checkbox) {
+            showFps = checkbox.checked;
+            if (isGameRunning) {
+                updateFpsVisibility();
+            }
+        }
+
+        function updateFpsVisibility() {
+            if (isGameRunning && showFps) {
+                fpsOverlay.style.display = 'block';
+                startFpsCounter();
+            } else {
+                fpsOverlay.style.display = 'none';
+                stopFpsCounter();
+            }
+        }
+
+        function startFpsCounter() {
+            stopFpsCounter();
+            let frameCount = 0;
+            let lastTime = performance.now();
+
+            function measureFps(currentTime) {
+                frameCount++;
+                if (currentTime - lastTime >= 1000) {
+                    let fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                    fpsOverlay.textContent = `FPS: ${fps}`;
+                    frameCount = 0;
+                    lastTime = currentTime;
+                }
+                if (isGameRunning && showFps) {
+                    fpsInterval = requestAnimationFrame(measureFps);
+                }
+            }
+            fpsInterval = requestAnimationFrame(measureFps);
+        }
+
+        function stopFpsCounter() {
+            if (fpsInterval) {
+                cancelAnimationFrame(fpsInterval);
+                fpsInterval = null;
+            }
+        }
 
         // --- Client-Side Search Processing Engine ---
         searchBar.addEventListener('input', (e) => {
@@ -540,6 +813,7 @@ __CARDS_PLACEHOLDER__
             
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
+            updateFpsVisibility();
             
             setTimeout(() => {
                 iframe.focus();
@@ -563,6 +837,7 @@ __CARDS_PLACEHOLDER__
             playView.style.display = 'none';
             dashboardContainer.style.display = 'flex';
             isGameRunning = false;
+            updateFpsVisibility();
             
             setTimeout(() => {
                 searchBar.focus();
