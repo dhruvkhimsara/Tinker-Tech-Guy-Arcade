@@ -38,6 +38,9 @@ def generate_arcade():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- Google Search Console Verification Tag -->
+    __GOOGLE_VERIFICATION_PLACEHOLDER__
+    
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -262,10 +265,11 @@ def generate_arcade():
             height: 100%;
         }
 
+        /* Star Button repositioned to bottom left */
         .favorite-star-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            bottom: 15px;
+            left: 18px;
             background: transparent;
             border: none;
             color: var(--text-muted);
@@ -644,7 +648,6 @@ __CARDS_PLACEHOLDER__
         let currentAccount = JSON.parse(localStorage.getItem('arcadeAccount')) || null;
         let userSettings = JSON.parse(localStorage.getItem('userCustomSettings')) || { accent: '#00ff88', wallpaper: '' };
 
-        // Apply saved custom settings on load
         if (userSettings.accent) {
             document.documentElement.style.setProperty('--accent-green', userSettings.accent);
             document.getElementById('theme-color-wheel').value = userSettings.accent;
@@ -670,7 +673,6 @@ __CARDS_PLACEHOLDER__
             document.getElementById('tab-' + tabName).classList.add('active');
         }
 
-        // --- Custom Theme & Wallpaper Functions ---
         function setCustomThemeColor(colorHex) {
             document.documentElement.style.setProperty('--accent-green', colorHex);
             userSettings.accent = colorHex;
@@ -701,7 +703,6 @@ __CARDS_PLACEHOLDER__
             localStorage.setItem('userCustomSettings', JSON.stringify(userSettings));
         }
 
-        // --- Image Cropper Helper for Circular Profile Pic ---
         function cropImageToCircle(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -744,7 +745,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- Favorites Bar Management ---
         function updateFavoritesBar() {
             const barContainer = document.getElementById('favorites-bar-container');
             const scrollList = document.getElementById('favorites-scroll-list');
@@ -764,7 +764,6 @@ __CARDS_PLACEHOLDER__
                 scrollList.appendChild(chip);
             });
 
-            // Update star icons on main grid cards
             document.querySelectorAll('.game-card').forEach(card => {
                 const title = card.querySelector('.game-title').textContent;
                 const starBtn = card.querySelector('.favorite-star-btn');
@@ -795,7 +794,6 @@ __CARDS_PLACEHOLDER__
             if (currentAccount) cloudSyncSave();
         }
 
-        // --- Cloud Authentication & Sync ---
         async function cloudAuthAction(actionType) {
             const usernameInput = document.getElementById('acc-username').value.trim();
             const passcodeInput = document.getElementById('acc-passcode').value.trim();
@@ -983,12 +981,15 @@ __CARDS_PLACEHOLDER__
 </html>
 """
 
-    full_html_content = html_template.replace('__CARDS_PLACEHOLDER__', all_cards_string)
+    # If you have your Google verification code, you can replace the empty string below, or paste it manually into index.html later
+    google_meta_tag = "" 
+    full_html_content = html_template.replace('__GOOGLE_VERIFICATION_PLACEHOLDER__', google_meta_tag)
+    full_html_content = full_html_content.replace('__CARDS_PLACEHOLDER__', all_cards_string)
 
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Configured with favorites, color wheel, custom circular avatar cropper, and wallpaper backgrounds.")
+    print(f"Arcade sync successful! Star buttons moved to bottom-left.")
 
 if __name__ == '__main__':
     generate_arcade()
