@@ -1340,7 +1340,6 @@ __CARDS_PLACEHOLDER__
                     },
                     body: JSON.stringify(db)
                 });
-                alert('Cloud sync successful!');
             } catch (err) {
                 console.error(err);
                 alert('Failed to sync to cloud.');
