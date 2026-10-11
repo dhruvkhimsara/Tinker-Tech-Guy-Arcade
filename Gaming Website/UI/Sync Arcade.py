@@ -18,19 +18,21 @@ def generate_arcade():
         display_title = os.path.splitext(file_name)[0]
         relative_path = f"../Games/{file_name}"
         
-        escaped_title = display_title.replace('"', '&quot;').replace("'", "\\'")
-        escaped_path = relative_path.replace("'", "\\'")
+        escaped_title = display_title.replace('"', '&quot;').replace("'", "\'")
+        escaped_path = relative_path.replace("'", "\'")
         
         card_html = f"""            <div class="game-card" data-title="{escaped_title.lower()}">
-                <button class="favorite-star-btn" onclick="toggleFavorite(event, '{display_title.replace("'", "\\'")}', '{escaped_path}')" title="Favorite">☆</button>
-                <div class="game-card-inner" onclick="launchGame('{escaped_path}', '{display_title.replace("'", "\\'")}')">
+                <button class="favorite-star-btn" onclick="toggleFavorite(event, '{display_title.replace("'", "\'")}', '{escaped_path}')" title="Favorite">☆</button>
+                <div class="game-card-inner" onclick="launchGame('{escaped_path}', '{display_title.replace("'", "\'")}')">
                     <div class="game-title">{display_title}</div>
                     <button class="btn-launch">PLAY</button>
                 </div>
             </div>"""
         card_elements.append(card_html)
 
-    all_cards_string = "\n\n".join(card_elements)
+    all_cards_string = "
+
+".join(card_elements)
 
     html_template = r"""<!DOCTYPE html>
 <html lang="en">
@@ -981,8 +983,7 @@ __CARDS_PLACEHOLDER__
 </html>
 """
 
-    # If you have your Google verification code, you can replace the empty string below, or paste it manually into index.html later
-    google_meta_tag = "" 
+    google_meta_tag = '<meta name="google-site-verification" content="SoFkZR3gCmDEKUOh6nJKASEXN0eakZbNsflg5EjVjjY" />'
     full_html_content = html_template.replace('__GOOGLE_VERIFICATION_PLACEHOLDER__', google_meta_tag)
     full_html_content = full_html_content.replace('__CARDS_PLACEHOLDER__', all_cards_string)
 
