@@ -95,7 +95,7 @@ def generate_arcade():
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 20px 20px;
+            padding: 50px 20px 20px 20px;
             text-align: center;
             flex-shrink: 0;
         }
@@ -106,7 +106,7 @@ def generate_arcade():
             text-transform: uppercase;
             letter-spacing: 6px;
             color: var(--text-main);
-            margin: 0 0 25px 0;
+            margin: 0 0 20px 0;
             text-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
         }
 
@@ -155,6 +155,68 @@ def generate_arcade():
             text-transform: uppercase;
             font-size: 0.8rem;
             opacity: 0.7;
+        }
+
+        /* --- RECENT GAMES HORIZONTAL SCROLL BAR --- */
+        #recent-bar-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 10px auto 0 auto;
+            padding: 0 20px;
+            display: none;
+        }
+
+        #recent-bar-container.visible {
+            display: block;
+        }
+
+        .recent-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .recent-scroll-wrapper {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-green) var(--panel-dark);
+        }
+
+        .recent-scroll-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .recent-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 3px;
+        }
+
+        .recent-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .recent-chip:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.08);
+            transform: translateY(-2px);
         }
 
         /* Dynamic Fluid Matrix Layout */
@@ -517,7 +579,7 @@ def generate_arcade():
             transform: rotate(90deg);
         }
 
-        /* Settings Modal & Sub-Directories / Tabs */
+        /* Settings Modal & Tabs */
         #settings-modal {
             display: none;
             position: fixed;
@@ -581,6 +643,7 @@ def generate_arcade():
             margin-bottom: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding-bottom: 12px;
+            overflow-x: auto;
         }
 
         .settings-tab-btn {
@@ -593,6 +656,7 @@ def generate_arcade():
             font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .settings-tab-btn.active {
@@ -647,6 +711,94 @@ def generate_arcade():
             font-size: 0.9rem;
         }
 
+        /* Account Tab Styles */
+        .account-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .account-input {
+            background: rgba(20, 20, 22, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .account-input:focus {
+            border-color: var(--accent-green);
+        }
+
+        .avatar-picker {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 5px 0 10px 0;
+        }
+
+        .avatar-option {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .avatar-option.selected {
+            border-color: var(--accent-green);
+            transform: scale(1.1);
+            background: rgba(0, 255, 136, 0.15);
+        }
+
+        .account-btn {
+            background: var(--accent-green);
+            color: #000;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: opacity 0.2s ease;
+        }
+
+        .account-btn:hover {
+            opacity: 0.9;
+        }
+
+        .account-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .account-avatar-display {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
         /* Analytics Tab Styles */
         .analytics-summary {
             display: flex;
@@ -677,7 +829,6 @@ def generate_arcade():
             letter-spacing: 1px;
         }
 
-        /* Weekly Chart */
         .chart-container {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -726,7 +877,6 @@ def generate_arcade():
             font-weight: 600;
         }
 
-        /* Play History List */
         .history-list {
             display: flex;
             flex-direction: column;
@@ -864,11 +1014,6 @@ def generate_arcade():
             -webkit-backdrop-filter: none !important;
             background-color: #141416 !important;
         }
-        body.performance-mode #pause-overlay,
-        body.performance-mode #settings-modal {
-            backdrop-filter: none !important;
-            background-color: rgba(5, 5, 5, 0.98) !important;
-        }
 
         /* FPS Overlay Style */
         #fps-overlay {
@@ -888,7 +1033,6 @@ def generate_arcade():
             letter-spacing: 0.5px;
         }
 
-        /* Global Mute Mask Style */
         .site-muted iframe {
             filter: grayscale(10%);
         }
@@ -903,7 +1047,7 @@ def generate_arcade():
         </svg>
     </div>
 
-    <!-- Settings Modal with Sub-Directories / Tabs -->
+    <!-- Settings Modal with Tabs -->
     <div id="settings-modal">
         <div class="settings-box">
             <div class="settings-header">
@@ -914,6 +1058,7 @@ def generate_arcade():
             <!-- Tabs Header -->
             <div class="settings-tabs">
                 <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
+                <button class="settings-tab-btn" onclick="switchSettingsTab('account', this)">Account & Cloud Sync</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
             </div>
 
@@ -970,7 +1115,52 @@ def generate_arcade():
                 </div>
             </div>
 
-            <!-- Tab 2: Playtime & Analytics -->
+            <!-- Tab 2: Account & Cloud Sync -->
+            <div id="tab-account" class="settings-tab-content">
+                <div id="account-logged-out" style="display: block;">
+                    <div class="settings-group">
+                        <div class="settings-group-title">Create / Sign In Cloud Account</div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Username</label>
+                            <input type="text" id="acc-username" class="account-input" placeholder="Enter username..." autocomplete="off">
+                        </div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Passcode / PIN</label>
+                            <input type="password" id="acc-passcode" class="account-input" placeholder="Enter passcode..." autocomplete="off">
+                        </div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Choose Profile Emoji</label>
+                            <div class="avatar-picker">
+                                <div class="avatar-option selected" onclick="selectAvatar('👾', this)">👾</div>
+                                <div class="avatar-option" onclick="selectAvatar('🕹️', this)">🕹️</div>
+                                <div class="avatar-option" onclick="selectAvatar('🚀', this)">🚀</div>
+                                <div class="avatar-option" onclick="selectAvatar('⚡', this)">⚡</div>
+                                <div class="avatar-option" onclick="selectAvatar('🔥', this)">🔥</div>
+                            </div>
+                        </div>
+                        <button class="account-btn" onclick="cloudAuthAction('register')">Create Account</button>
+                        <button class="account-btn" style="background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green); margin-top: 8px;" onclick="cloudAuthAction('login')">Sign In</button>
+                    </div>
+                </div>
+
+                <div id="account-logged-in" style="display: none;">
+                    <div class="account-card">
+                        <div id="profile-avatar-display" class="account-avatar-display">👾</div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Signed in as</div>
+                            <div id="profile-username-display" style="font-size: 1.2rem; font-weight: 900; color: var(--accent-green);">Player</div>
+                        </div>
+                    </div>
+                    <div class="settings-group" style="margin-top: 15px;">
+                        <div class="settings-group-title">Cloud Sync Status</div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 15px 0;">Your playtime, history, and stats are securely synced to your cloud account.</p>
+                        <button class="account-btn" onclick="cloudSyncSave()">Manual Sync Now</button>
+                        <button class="account-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; margin-top: 8px;" onclick="logoutAccount()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Playtime & Analytics -->
             <div id="tab-analytics" class="settings-tab-content">
                 <div class="analytics-summary">
                     <div class="analytics-metric">
@@ -1006,6 +1196,14 @@ def generate_arcade():
             <div class="logo">Tinker Tech Guy's <span>Arcade</span></div>
             <div class="search-wrapper">
                 <input type="text" id="game-search" class="search-bar" placeholder="Search Catalog..." autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Recent Games Horizontal Bar -->
+        <div id="recent-bar-container">
+            <div class="recent-section-title">Recent Games</div>
+            <div class="recent-scroll-wrapper" id="recent-scroll-list">
+                <!-- Populated dynamically -->
             </div>
         </div>
 
@@ -1045,21 +1243,29 @@ __CARDS_PLACEHOLDER__
         let isGameRunning = false;
         let showFps = false;
         let fpsInterval = null;
+        let selectedAvatarEmoji = '👾';
 
-        // Analytics State Variables
+        // JSONBin Cloud Config
+        const JSONBIN_BIN_ID = '6acbbc99ffd5d1605361ea78';
+        const JSONBIN_API_KEY = '$2a$10$kGKr/g4JvRiMS38uIrheZuMovM7JzvL0/OpwdqgNETjl.itPCxZbS';
+
+        // Analytics & Account State Variables
         let currentGameName = '';
         let gameStartTime = 0;
         let sessionTimerInterval = null;
 
-        // Load analytics data from localStorage or initialize
         let arcadeData = JSON.parse(localStorage.getItem('arcadeAnalytics')) || {
-            weeklyMinutes: [0, 0, 0, 0, 0, 0, 0], // Sun - Sat
-            history: [] // Array of { name, duration, date }
+            weeklyMinutes: [0, 0, 0, 0, 0, 0, 0],
+            history: [],
+            recentGames: []
         };
+
+        let currentAccount = JSON.parse(localStorage.getItem('arcadeAccount')) || null;
 
         function openSettingsModal() {
             settingsModal.style.display = 'flex';
             updateAnalyticsUI();
+            checkAccountUIState();
         }
 
         function closeSettingsModal() {
@@ -1078,15 +1284,182 @@ __CARDS_PLACEHOLDER__
             }
         }
 
+        // --- JSONBin Cloud Account Integration ---
+        async function selectAvatar(emoji, element) {
+            selectedAvatarEmoji = emoji;
+            document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        async function cloudAuthAction(actionType) {
+            const usernameInput = document.getElementById('acc-username').value.trim();
+            const passcodeInput = document.getElementById('acc-passcode').value.trim();
+
+            if (!usernameInput || !passcodeInput) {
+                alert('Please enter both a username and passcode.');
+                return;
+            }
+
+            try {
+                // Fetch current cloud database
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                const result = await response.json();
+                let db = result.record || { users: [] };
+                if (!db.users) db.users = [];
+
+                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === usernameInput.toLowerCase());
+
+                if (actionType === 'register') {
+                    if (userIndex !== -1) {
+                        alert('Username already exists. Please sign in instead.');
+                        return;
+                    }
+                    const newUser = {
+                        username: usernameInput,
+                        passcode: passcodeInput,
+                        avatar: selectedAvatarEmoji,
+                        data: arcadeData
+                    };
+                    db.users.push(newUser);
+                    currentAccount = { username: usernameInput, passcode: passcodeInput, avatar: selectedAvatarEmoji };
+                } else {
+                    // Login
+                    if (userIndex === -1) {
+                        alert('Account not found. Please create an account first.');
+                        return;
+                    }
+                    if (db.users[userIndex].passcode !== passcodeInput) {
+                        alert('Incorrect passcode.');
+                        return;
+                    }
+                    // Load user cloud data
+                    currentAccount = { username: db.users[userIndex].username, passcode: db.users[userIndex].passcode, avatar: db.users[userIndex].avatar };
+                    if (db.users[userIndex].data) {
+                        arcadeData = db.users[userIndex].data;
+                        localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
+                        updateRecentBar();
+                    }
+                }
+
+                // Update cloud bin
+                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(db)
+                });
+
+                localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
+                checkAccountUIState();
+                alert(`Successfully authenticated as ${usernameInput}!`);
+            } catch (err) {
+                console.error(err);
+                alert('Cloud connection error. Check your internet connection.');
+            }
+        }
+
+        async function cloudSyncSave() {
+            if (!currentAccount) return;
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                const result = await response.json();
+                let db = result.record || { users: [] };
+                if (!db.users) db.users = [];
+
+                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
+                if (userIndex !== -1) {
+                    db.users[userIndex].data = arcadeData;
+                    db.users[userIndex].avatar = currentAccount.avatar;
+                } else {
+                    db.users.push({
+                        username: currentAccount.username,
+                        passcode: currentAccount.passcode,
+                        avatar: currentAccount.avatar,
+                        data: arcadeData
+                    });
+                }
+
+                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(db)
+                });
+                alert('Cloud sync successful!');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to sync to cloud.');
+            }
+        }
+
+        function logoutAccount() {
+            currentAccount = null;
+            localStorage.removeItem('arcadeAccount');
+            checkAccountUIState();
+        }
+
+        function checkAccountUIState() {
+            const loggedOutDiv = document.getElementById('account-logged-out');
+            const loggedInDiv = document.getElementById('account-logged-in');
+
+            if (currentAccount) {
+                loggedOutDiv.style.display = 'none';
+                loggedInDiv.style.display = 'block';
+                document.getElementById('profile-username-display').textContent = currentAccount.username;
+                document.getElementById('profile-avatar-display').textContent = currentAccount.avatar;
+            } else {
+                loggedOutDiv.style.display = 'block';
+                loggedInDiv.style.display = 'none';
+            }
+        }
+
+        // --- Recent Games Bar UI ---
+        function updateRecentBar() {
+            const recentBarContainer = document.getElementById('recent-bar-container');
+            const recentScrollList = document.getElementById('recent-scroll-list');
+            recentScrollList.innerHTML = '';
+
+            if (!arcadeData.recentGames || arcadeData.recentGames.length === 0) {
+                recentBarContainer.classList.remove('visible');
+                return;
+            }
+
+            recentBarContainer.classList.add('visible');
+            arcadeData.recentGames.forEach(game => {
+                const chip = document.createElement('div');
+                chip.className = 'recent-chip';
+                chip.textContent = game.name;
+                chip.onclick = () => launchGame(game.path, game.name);
+                recentScrollList.appendChild(chip);
+            });
+        }
+
+        function addRecentGame(gameName, gamePath) {
+            if (!arcadeData.recentGames) arcadeData.recentGames = [];
+            arcadeData.recentGames = arcadeData.recentGames.filter(g => g.name !== gameName);
+            arcadeData.recentGames.unshift({ name: gameName, path: gamePath });
+            if (arcadeData.recentGames.length > 8) arcadeData.recentGames.pop();
+            localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
+            updateRecentBar();
+            if (currentAccount) cloudSyncSave();
+        }
+
         // --- Analytics & History Functions ---
         function recordPlayTime(gameName, secondsElapsed) {
             if (secondsElapsed <= 0) return;
             const minutesToAdd = secondsElapsed / 60;
-            const todayIndex = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+            const todayIndex = new Date().getDay();
 
             arcadeData.weeklyMinutes[todayIndex] += minutesToAdd;
 
-            // Update or add to history
             const existingEntry = arcadeData.history.find(h => h.name === gameName);
             if (existingEntry) {
                 existingEntry.duration += secondsElapsed;
@@ -1099,12 +1472,12 @@ __CARDS_PLACEHOLDER__
                 });
             }
 
-            // Keep history limited to last 10 entries
             if (arcadeData.history.length > 10) {
                 arcadeData.history.pop();
             }
 
             localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
+            if (currentAccount) cloudSyncSave();
         }
 
         function formatDuration(totalSeconds) {
@@ -1116,12 +1489,10 @@ __CARDS_PLACEHOLDER__
         }
 
         function updateAnalyticsUI() {
-            // Total time calculation
             const totalMinutes = arcadeData.weeklyMinutes.reduce((a, b) => a + b, 0);
             document.getElementById('analytics-total-time').textContent = formatDuration(totalMinutes * 60);
             document.getElementById('analytics-total-games').textContent = arcadeData.history.length;
 
-            // Render Weekly Bar Chart
             const chartContainer = document.getElementById('chart-bars-container');
             chartContainer.innerHTML = '';
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1140,7 +1511,6 @@ __CARDS_PLACEHOLDER__
                 chartContainer.appendChild(col);
             });
 
-            // Render History List
             const historyContainer = document.getElementById('history-list-container');
             historyContainer.innerHTML = '';
 
@@ -1269,13 +1639,12 @@ __CARDS_PLACEHOLDER__
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
             updateFpsVisibility();
+            addRecentGame(gameTitle, gameFilePath);
 
-            // Track playtime start
             currentGameName = gameTitle;
             gameStartTime = Date.now();
             if (sessionTimerInterval) clearInterval(sessionTimerInterval);
             sessionTimerInterval = setInterval(() => {
-                // Periodic background record every 30 seconds of active play
                 const elapsedSec = (Date.now() - gameStartTime) / 1000;
                 if (elapsedSec >= 30) {
                     recordPlayTime(currentGameName, 30);
@@ -1304,11 +1673,10 @@ __CARDS_PLACEHOLDER__
         }
 
         function exitToHub() {
-            // Save remaining playtime before closing session
             if (isGameRunning && gameStartTime) {
                 const elapsedSec = (Date.now() - gameStartTime) / 1000;
                 recordPlayTime(currentGameName, elapsedSec);
-                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+                if (sessionTimerIdentifier) clearInterval(sessionTimerInterval);
             }
 
             iframe.src = ""; 
@@ -1332,19 +1700,21 @@ __CARDS_PLACEHOLDER__
                 }
             }
         });
+
+        // Initialize recent bar on load
+        updateRecentBar();
     </script>
 
 </body>
 </html>
 """
 
-    # Inject the generated game cards securely
     full_html_content = html_template.replace('__CARDS_PLACEHOLDER__', all_cards_string)
 
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Added Playtime Analytics & History tab with weekly charts.")
+    print(f"Arcade sync successful! Added JSONBin cloud account sync system.")
 
 if __name__ == '__main__':
     generate_arcade()
