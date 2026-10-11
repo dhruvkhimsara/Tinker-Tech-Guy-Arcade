@@ -742,6 +742,10 @@ __CARDS_PLACEHOLDER__
             else document.body.classList.remove('high-contrast');
         }
 
+        function toggleFpsSetting(checkbox) {
+            showFps = checkbox.checked;
+        }
+
         function cropImageToCircle(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -822,10 +826,16 @@ __CARDS_PLACEHOLDER__
             if (!arcadeData.favorites) arcadeData.favorites = [];
             
             const index = arcadeData.favorites.findIndex(f => f.name === gameName);
+            const starBtn = event.currentTarget;
+
             if (index !== -1) {
                 arcadeData.favorites.splice(index, 1);
+                starBtn.textContent = '☆';
+                starBtn.classList.remove('active');
             } else {
                 arcadeData.favorites.push({ name: gameName, path: gamePath });
+                starBtn.textContent = '★';
+                starBtn.classList.add('active');
             }
 
             localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
@@ -1120,7 +1130,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! All features integrated.")
+    print("Arcade sync successful! All features and bug fixes integrated.")
 
 if __name__ == '__main__':
     generate_arcade()
