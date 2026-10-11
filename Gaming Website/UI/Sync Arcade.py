@@ -2,7 +2,6 @@ import os
 import re
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Games is located one level up from this script
 GAMES_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'Games'))
 INDEX_FILE = os.path.join(SCRIPT_DIR, 'index.html')
 
@@ -22,9 +21,12 @@ def generate_arcade():
         escaped_title = display_title.replace('"', '&quot;').replace("'", "\\'")
         escaped_path = relative_path.replace("'", "\\'")
         
-        card_html = f"""            <div class="game-card" data-title="{escaped_title.lower()}" onclick="launchGame('{escaped_path}', '{display_title.replace("'", "\\'")}')">
-                <div class="game-title">{display_title}</div>
-                <button class="btn-launch">PLAY</button>
+        card_html = f"""            <div class="game-card" data-title="{escaped_title.lower()}">
+                <button class="favorite-star-btn" onclick="toggleFavorite(event, '{display_title.replace("'", "\\'")}', '{escaped_path}')" title="Favorite">☆</button>
+                <div class="game-card-inner" onclick="launchGame('{escaped_path}', '{display_title.replace("'", "\\'")}')">
+                    <div class="game-title">{display_title}</div>
+                    <button class="btn-launch">PLAY</button>
+                </div>
             </div>"""
         card_elements.append(card_html)
 
@@ -49,6 +51,12 @@ def generate_arcade():
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
             --border-color: #27272a;
+            --custom-bg-gradient: radial-gradient(circle at 15% 15%, rgba(0, 255, 136, 0.22) 0%, transparent 32%),
+                radial-gradient(circle at 85% 55%, rgba(120, 80, 255, 0.20) 0%, transparent 38%),
+                radial-gradient(circle at 25% 85%, rgba(255, 80, 150, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 65% 10%, rgba(0, 180, 255, 0.16) 0%, transparent 32%),
+                radial-gradient(circle at 55% 45%, rgba(0, 255, 200, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at top, #111116 0%, var(--bg-dark) 100%);
         }
 
         * {
@@ -75,13 +83,9 @@ def generate_arcade():
             flex-direction: column;
             height: 100%;
             width: 100%;
-            background:
-                radial-gradient(circle at 15% 15%, rgba(0, 255, 136, 0.22) 0%, transparent 32%),
-                radial-gradient(circle at 85% 55%, rgba(120, 80, 255, 0.20) 0%, transparent 38%),
-                radial-gradient(circle at 25% 85%, rgba(255, 80, 150, 0.15) 0%, transparent 35%),
-                radial-gradient(circle at 65% 10%, rgba(0, 180, 255, 0.16) 0%, transparent 32%),
-                radial-gradient(circle at 55% 45%, rgba(0, 255, 200, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at top, #111116 0%, var(--bg-dark) 100%);
+            background: var(--custom-bg-gradient);
+            background-size: cover;
+            background-position: center;
             overflow-y: auto;
         }
 
@@ -151,7 +155,8 @@ def generate_arcade():
             opacity: 0.7;
         }
 
-        #recent-bar-container {
+        /* --- FAVORITES HORIZONTAL SCROLL BAR --- */
+        #favorites-bar-container {
             width: 100%;
             max-width: 1400px;
             margin: 10px auto 0 auto;
@@ -159,11 +164,11 @@ def generate_arcade():
             display: none;
         }
 
-        #recent-bar-container.visible {
+        #favorites-bar-container.visible {
             display: block;
         }
 
-        .recent-section-title {
+        .favorites-section-title {
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -172,7 +177,7 @@ def generate_arcade():
             font-weight: 800;
         }
 
-        .recent-scroll-wrapper {
+        .favorites-scroll-wrapper {
             display: flex;
             gap: 15px;
             overflow-x: auto;
@@ -181,15 +186,15 @@ def generate_arcade():
             scrollbar-color: var(--accent-green) var(--panel-dark);
         }
 
-        .recent-scroll-wrapper::-webkit-scrollbar {
+        .favorites-scroll-wrapper::-webkit-scrollbar {
             height: 6px;
         }
-        .recent-scroll-wrapper::-webkit-scrollbar-thumb {
+        .favorites-scroll-wrapper::-webkit-scrollbar-thumb {
             background: var(--accent-green);
             border-radius: 3px;
         }
 
-        .recent-chip {
+        .favorite-chip {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
@@ -205,7 +210,7 @@ def generate_arcade():
             flex-shrink: 0;
         }
 
-        .recent-chip:hover {
+        .favorite-chip:hover {
             border-color: var(--accent-green);
             color: var(--accent-green);
             background: rgba(0, 255, 136, 0.08);
@@ -226,82 +231,62 @@ def generate_arcade():
 
         .game-card {
             position: relative;
-            overflow: hidden;
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
             -webkit-backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
             border-radius: 28px;
-            border: none;
             box-shadow: 
                 0 20px 45px -12px rgba(0, 0, 0, 0.65),
                 0 0 0 1px rgba(255, 255, 255, 0.10),
                 inset 0 1px 0 rgba(255, 255, 255, 0.55),
-                inset 1px 0 0 rgba(255, 255, 255, 0.25),
-                inset 0 -1px 1px rgba(0, 0, 0, 0.35),
-                inset -1px 0 1px rgba(0, 0, 0, 0.18),
-                inset 0 0 40px rgba(255, 255, 255, 0.04);
-            cursor: pointer;
-            transition: 
-                transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), 
-                background 0.45s ease, 
-                box-shadow 0.45s ease,
-                backdrop-filter 0.45s ease;
+                inset 1px 0 0 rgba(255, 255, 255, 0.25);
             width: calc(20% - 20px); 
             min-width: 260px;       
             max-width: 290px;
             min-height: 180px; 
             display: flex;
             flex-direction: column;
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease;
+        }
+
+        .game-card-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            align-items: center;    
+            align-items: center;
             padding: 24px;
             gap: 18px;
-            opacity: 1;
-            visibility: visible;
-            isolation: isolate;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
         }
 
-        .game-card::before {
-            content: '';
+        .favorite-star-btn {
             position: absolute;
-            inset: -1px;
-            background: linear-gradient(
-                115deg,
-                transparent 30%,
-                rgba(255, 255, 255, 0.08) 42%,
-                rgba(255, 255, 255, 0.28) 50%,
-                rgba(255, 255, 255, 0.08) 58%,
-                transparent 70%
-            );
-            transform: translateX(-130%) skewX(-6deg);
-            transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
-            pointer-events: none;
-            z-index: 1;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            z-index: 5;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
 
-        .game-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 55%;
-            height: 55%;
-            background: radial-gradient(
-                circle at 0% 0%,
-                rgba(255, 255, 255, 0.22) 0%,
-                rgba(255, 255, 255, 0.06) 25%,
-                transparent 55%
-            );
-            border-radius: inherit;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.9;
+        .favorite-star-btn:hover {
+            transform: scale(1.2);
+            color: #ffb000;
+        }
+
+        .favorite-star-btn.active {
+            color: #ffb000;
+            text-shadow: 0 0 10px rgba(255, 176, 0, 0.5);
         }
 
         .game-card.hidden {
-            display: none;
-            opacity: 0;
-            visibility: hidden;
+            display: none !important;
         }
 
         .game-card:hover {
@@ -310,12 +295,7 @@ def generate_arcade():
             box-shadow: 
                 0 30px 60px -15px rgba(0, 0, 0, 0.75),
                 0 0 0 1px rgba(255, 255, 255, 0.22),
-                inset 0 1px 0 rgba(255, 255, 255, 0.85),
-                inset 1px 0 0 rgba(255, 255, 255, 0.4),
-                inset 0 -1px 1px rgba(0, 0, 0, 0.45),
-                inset -1px 0 1px rgba(0, 0, 0, 0.25),
-                inset 0 0 50px rgba(255, 255, 255, 0.07),
-                0 0 35px rgba(0, 255, 136, 0.15);
+                0 0 35px var(--accent-green);
         }
 
         .game-title {
@@ -326,10 +306,8 @@ def generate_arcade():
             letter-spacing: 0.5px;
             text-align: center;
             width: 100%;
-            white-space: normal; 
             overflow-wrap: break-word; 
             line-height: 1.3;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.35);
         }
 
         .btn-launch {
@@ -344,45 +322,32 @@ def generate_arcade():
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            transition: all 0.25s ease;
             cursor: pointer;
             margin-top: auto;
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .game-card:hover .btn-launch {
             background-color: var(--accent-green);
             border-color: var(--accent-green);
             color: #000000;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         #play-view {
             display: none;
             position: fixed;
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #000000;
             z-index: 500;
         }
 
         iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            margin: 0;
-            padding: 0;
-            display: block;
+            width: 100%; height: 100%; border: none; display: block;
         }
 
         #floating-escape-btn {
             position: absolute;
-            top: 0;
-            left: 50%;
+            top: 0; left: 50%;
             transform: translateX(-50%);
             background-color: rgba(20, 20, 22, 0.75);
             border: 1px solid var(--border-color);
@@ -393,623 +358,120 @@ def generate_arcade():
             font-weight: 800;
             font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
             cursor: pointer;
             z-index: 600;
-            backdrop-filter: blur(6px);
-            transition: all 0.2s ease;
             opacity: 0.15;
+            transition: all 0.2s ease;
         }
 
         #floating-escape-btn:hover {
             opacity: 1;
             color: var(--accent-green);
             border-color: var(--accent-green);
-            background-color: var(--panel-dark);
-            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
-            padding-bottom: 10px;
         }
 
         #pause-overlay {
-            display: none; 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(5, 5, 5, 0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(8px);
+            z-index: 1000; justify-content: center; align-items: center;
         }
 
         .pause-box {
             background-color: var(--panel-dark);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 45px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            border-radius: 16px; padding: 45px; text-align: center; width: 90%; max-width: 400px;
         }
 
-        .pause-box h1 {
-            margin: 0 0 10px 0;
-            color: #ffffff;
-            font-size: 2.2rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
-
-        .pause-box p {
-            color: var(--text-muted);
-            margin: 0 0 30px 0;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .pause-btns {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .pause-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
 
         .btn-menu {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: #ffffff;
-            padding: 14px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: transparent; border: 1px solid var(--border-color); color: #fff;
+            padding: 14px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase;
         }
 
-        .btn-menu:hover {
-            border-color: var(--accent-green);
-            background-color: rgba(0, 255, 136, 0.05);
-            color: var(--accent-green);
-        }
-
-        .btn-quit {
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #ef4444;
-        }
-
-        .btn-quit:hover {
-            border-color: #ef4444;
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
+        .btn-menu:hover { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-quit { border-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
 
         .top-left-link {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 8px 16px;
-            border-radius: 20px;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-decoration: none;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .top-left-link:hover {
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-            background: rgba(0, 255, 136, 0.08);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            position: fixed; top: 20px; left: 20px; z-index: 100;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 16px; border-radius: 20px; color: var(--text-main); font-size: 0.85rem; font-weight: 700; text-decoration: none;
         }
 
         .top-right-settings-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        .top-right-settings-btn:hover {
-            border-color: var(--accent-green);
-            background: rgba(0, 255, 136, 0.08);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
-        }
-
-        .top-right-settings-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--text-main);
-            transition: fill 0.25s ease, transform 0.5s ease;
-        }
-
-        .top-right-settings-btn:hover svg {
-            fill: var(--accent-green);
-            transform: rotate(90deg);
-        }
+        .top-right-settings-btn svg { width: 20px; height: 20px; fill: var(--text-main); }
+        .top-right-settings-btn:hover svg { fill: var(--accent-green); transform: rotate(90deg); transition: transform 0.5s ease; }
 
         #settings-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(5, 5, 5, 0.85);
-            z-index: 1100;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(8px);
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(5, 5, 5, 0.85); z-index: 1100; justify-content: center; align-items: center;
         }
 
         .settings-box {
-            background-color: var(--panel-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 560px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            background-color: var(--panel-dark); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 30px; width: 90%; max-width: 560px; max-height: 85vh;
+            display: flex; flex-direction: column;
         }
 
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-        }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .settings-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
 
-        .settings-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
+        .settings-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; overflow-x: auto; }
+        .settings-tab-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .settings-tab-btn.active { background: rgba(0, 255, 136, 0.1); border-color: var(--accent-green); color: var(--accent-green); }
 
-        .settings-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: color 0.2s ease;
-        }
+        .settings-tab-content { display: none; overflow-y: auto; flex-direction: column; gap: 20px; max-height: 50vh; }
+        .settings-tab-content.active { display: flex; }
 
-        .settings-close:hover {
-            color: var(--text-main);
-        }
+        .settings-group { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 15px; }
+        .settings-group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-green); margin-bottom: 12px; font-weight: 800; }
 
-        .settings-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 12px;
-            overflow-x: auto;
-        }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+        .setting-item:not(:last-child) { border-bottom: 1px solid rgba(255, 255, 255, 0.04); margin-bottom: 8px; }
 
-        .settings-tab-btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
+        .account-form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .account-input { background: rgba(20, 20, 22, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 10px 14px; color: var(--text-main); outline: none; }
+        .account-input:focus { border-color: var(--accent-green); }
 
-        .settings-tab-btn.active {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-        }
+        .account-btn { background: var(--accent-green); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
 
-        .settings-tab-content {
-            display: none;
-            overflow-y: auto;
-            flex-direction: column;
-            gap: 20px;
-            padding-right: 5px;
-            max-height: 50vh;
-        }
+        .account-card { display: flex; align-items: center; gap: 15px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; border-radius: 12px; }
+        .account-avatar-display { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent-green); object-fit: cover; background: rgba(0,255,136,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden; }
+        .account-avatar-display img { width: 100%; height: 100%; object-fit: cover; }
 
-        .settings-tab-content.active {
-            display: flex;
-        }
+        .color-picker-wrapper { display: flex; gap: 10px; align-items: center; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; background: none; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid var(--border-color); border-radius: 50%; }
 
-        .settings-group {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 15px;
-        }
+        .file-upload-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 8px; color: var(--text-main); font-weight: 700; cursor: pointer; font-size: 0.85rem; text-align: center; }
+        .file-upload-btn:hover { border-color: var(--accent-green); color: var(--accent-green); }
 
-        .settings-group-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--accent-green);
-            margin-bottom: 12px;
-            font-weight: 800;
-        }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #27272a; transition: 0.3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-green); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-        }
-
-        .setting-item:not(:last-child) {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            margin-bottom: 8px;
-        }
-
-        .setting-label {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .account-form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .account-input {
-            background: rgba(20, 20, 22, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            outline: none;
-        }
-
-        .account-input:focus {
-            border-color: var(--accent-green);
-        }
-
-        .avatar-picker {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 5px 0 10px 0;
-        }
-
-        .avatar-option {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            background: rgba(255,255,255,0.05);
-            transition: all 0.2s ease;
-        }
-
-        .avatar-option.selected {
-            border-color: var(--accent-green);
-            transform: scale(1.1);
-            background: rgba(0, 255, 136, 0.15);
-        }
-
-        .account-btn {
-            background: var(--accent-green);
-            color: #000;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 800;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: opacity 0.2s ease;
-        }
-
-        .account-btn:hover {
-            opacity: 0.9;
-        }
-
-        .account-card {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 15px;
-            border-radius: 12px;
-        }
-
-        .account-avatar-display {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(0, 255, 136, 0.1);
-            border: 2px solid var(--accent-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-        }
-
-        .analytics-summary {
-            display: flex;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 15px;
-        }
-
-        .analytics-metric {
-            text-align: center;
-            flex: 1;
-        }
-
-        .analytics-metric-value {
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--accent-green);
-            margin-top: 4px;
-        }
-
-        .analytics-metric-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .chart-container {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 15px;
-        }
-
-        .chart-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: var(--text-main);
-        }
-
-        .chart-bars {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            height: 120px;
-            padding-top: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .chart-bar-col {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            height: 100%;
-            justify-content: flex-end;
-        }
-
-        .chart-bar {
-            width: 22px;
-            background: var(--accent-green);
-            border-radius: 4px 4px 0 0;
-            transition: height 0.4s ease;
-            min-height: 4px;
-        }
-
-        .chart-day-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-        }
-
-        .history-game-name {
-            font-weight: 700;
-        }
-
-        .history-game-time {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .color-swatches {
-            display: flex;
-            gap: 8px;
-        }
-
-        .swatch {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-
-        .swatch:hover {
-            transform: scale(1.15);
-        }
-
-        .swatch.active {
-            border-color: #ffffff;
-            transform: scale(1.1);
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 46px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #27272a;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        input:checked + .slider {
-            background-color: var(--accent-green);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
-        body.high-contrast {
-            --bg-dark: #000000;
-            --panel-dark: #111111;
-            --text-main: #ffffff;
-            --text-muted: #ffff00;
-            --border-color: #ffffff;
-        }
-        body.high-contrast .game-card {
-            background: #000000;
-            border: 2px solid #ffffff;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-        }
-        body.high-contrast .game-card:hover {
-            border-color: var(--accent-green);
-        }
-        body.high-contrast .search-bar {
-            background-color: #000000;
-            border: 2px solid #ffffff;
-            color: #ffffff;
-        }
-
-        body.performance-mode #dashboard-container {
-            background: #050505 !important;
-        }
-        body.performance-mode .game-card {
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            background: #141416 !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-        }
-        body.performance-mode .game-card::before,
-        body.performance-mode .game-card::after {
-            display: none !important;
-        }
-        body.performance-mode .search-bar {
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            background-color: #141416 !important;
-        }
-
-        #fps-overlay {
-            display: none;
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            color: #ffffff;
-            font-family: monospace;
-            font-size: 13px;
-            font-weight: 700;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 4px 8px;
-            border-radius: 4px;
-            pointer-events: none;
-            z-index: 650;
-            letter-spacing: 0.5px;
-        }
-
-        .site-muted iframe {
-            filter: grayscale(10%);
-        }
+        #fps-overlay { display: none; position: absolute; top: 15px; left: 15px; color: #fff; font-family: monospace; font-size: 13px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; z-index: 650; }
     </style>
 </head>
 <body>
 
-    <a href="https://www.youtube.com/channel/UCJNCidDM_s1lz9sKx80EQMw" target="_blank" class="top-left-link">Click Here To Visit My YouTube Channel</a>
+    <a href="https://www.youtube.com/channel/UCJNCidDM_s1lz9sKx80EQMw" target="_blank" class="top-left-link">Visit YouTube Channel</a>
     <div class="top-right-settings-btn" onclick="openSettingsModal()" title="Settings">
         <svg viewBox="0 0 24 24">
             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.3L5.24,5.34c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.88 C2.62,9.08,2.67,9.35,2.86,9.5l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
         </svg>
     </div>
 
+    <!-- Settings Modal -->
     <div id="settings-modal">
         <div class="settings-box">
             <div class="settings-header">
@@ -1023,25 +485,25 @@ def generate_arcade():
                 <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
             </div>
 
+            <!-- General Tab -->
             <div id="tab-general" class="settings-tab-content active">
                 <div class="settings-group">
-                    <div class="settings-group-title">Appearance & Theme</div>
+                    <div class="settings-group-title">Theme Customization</div>
                     <div class="setting-item">
-                        <span class="setting-label">Accent Color</span>
-                        <div class="color-swatches">
-                            <div class="swatch active" style="background-color: #00ff88;" onclick="setAccentColor('#00ff88', this)"></div>
-                            <div class="swatch" style="background-color: #00b4ff;" onclick="setAccentColor('#00b4ff', this)"></div>
-                            <div class="swatch" style="background-color: #7850ff;" onclick="setAccentColor('#7850ff', this)"></div>
-                            <div class="swatch" style="background-color: #ff5096;" onclick="setAccentColor('#ff5096', this)"></div>
-                            <div class="swatch" style="background-color: #ffb000;" onclick="setAccentColor('#ffb000', this)"></div>
+                        <span class="setting-label">Accent Color Shading</span>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="theme-color-wheel" value="#00ff88" onchange="setCustomThemeColor(this.value)">
+                            <button class="file-upload-btn" onclick="resetThemeColor()">Reset Factory Default</button>
                         </div>
                     </div>
-                    <div class="setting-item">
-                        <span class="setting-label">High Contrast Mode</span>
-                        <label class="switch">
-                            <input type="checkbox" id="high-contrast-toggle" onchange="toggleHighContrast(this)">
-                            <span class="slider"></span>
-                        </label>
+                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <span class="setting-label">Custom Background Wallpaper</span>
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <label class="file-upload-btn" style="flex: 1; text-align: center;">
+                                Upload Image <input type="file" accept="image/*" style="display: none;" onchange="uploadCustomWallpaper(event)">
+                            </label>
+                            <button class="file-upload-btn" onclick="resetWallpaper()">Reset Gradient</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1049,32 +511,16 @@ def generate_arcade():
                     <div class="settings-group-title">Performance & Monitoring</div>
                     <div class="setting-item">
                         <span class="setting-label">Performance Mode (Low-Spec)</span>
-                        <label class="switch">
-                            <input type="checkbox" id="performance-toggle" onchange="togglePerformanceMode(this)">
-                            <span class="slider"></span>
-                        </label>
+                        <label class="switch"><input type="checkbox" id="performance-toggle" onchange="togglePerformanceMode(this)"><span class="slider"></span></label>
                     </div>
                     <div class="setting-item">
                         <span class="setting-label">Overlay Framerate (FPS)</span>
-                        <label class="switch">
-                            <input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="settings-group">
-                    <div class="settings-group-title">Audio Controls</div>
-                    <div class="setting-item">
-                        <span class="setting-label">Global Mute Site-Wide</span>
-                        <label class="switch">
-                            <input type="checkbox" id="mute-toggle" onchange="toggleGlobalMute(this)">
-                            <span class="slider"></span>
-                        </label>
+                        <label class="switch"><input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)"><span class="slider"></span></label>
                     </div>
                 </div>
             </div>
 
+            <!-- Account Tab -->
             <div id="tab-account" class="settings-tab-content">
                 <div id="account-logged-out" style="display: block;">
                     <div class="settings-group">
@@ -1088,14 +534,8 @@ def generate_arcade():
                             <input type="password" id="acc-passcode" class="account-input" placeholder="Enter passcode..." autocomplete="off">
                         </div>
                         <div class="account-form-group">
-                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Choose Profile Emoji</label>
-                            <div class="avatar-picker">
-                                <div class="avatar-option selected" onclick="selectAvatar('👾', this)">👾</div>
-                                <div class="avatar-option" onclick="selectAvatar('🕹️', this)">🕹️</div>
-                                <div class="avatar-option" onclick="selectAvatar('🚀', this)">🚀</div>
-                                <div class="avatar-option" onclick="selectAvatar('⚡', this)">⚡</div>
-                                <div class="avatar-option" onclick="selectAvatar('🔥', this)">🔥</div>
-                            </div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Profile Picture</label>
+                            <label class="file-upload-btn">Upload Circular Avatar <input type="file" accept="image/*" style="display: none;" onchange="handleNewUserAvatar(event)"></label>
                         </div>
                         <button class="account-btn" onclick="cloudAuthAction('register')">Create Account</button>
                         <button class="account-btn" style="background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green); margin-top: 8px;" onclick="cloudAuthAction('login')">Sign In</button>
@@ -1104,43 +544,37 @@ def generate_arcade():
 
                 <div id="account-logged-in" style="display: none;">
                     <div class="account-card">
-                        <div id="profile-avatar-display" class="account-avatar-display">👾</div>
-                        <div>
+                        <div class="account-avatar-display" id="profile-avatar-box">👾</div>
+                        <div style="flex: 1;">
                             <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Signed in as</div>
                             <div id="profile-username-display" style="font-size: 1.2rem; font-weight: 900; color: var(--accent-green);">Player</div>
                         </div>
                     </div>
                     <div class="settings-group" style="margin-top: 15px;">
-                        <div class="settings-group-title">Cloud Sync Status</div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 15px 0;">Your playtime, history, and stats are securely synced to your cloud account.</p>
-                        <button class="account-btn" onclick="cloudSyncSave()">Manual Sync Now</button>
+                        <div class="settings-group-title">Edit Account Details</div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">New Username</label>
+                            <input type="text" id="edit-username" class="account-input" autocomplete="off">
+                        </div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">New Passcode</label>
+                            <input type="password" id="edit-passcode" class="account-input" autocomplete="off">
+                        </div>
+                        <div class="account-form-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">New Profile Picture</label>
+                            <label class="file-upload-btn">Choose Image <input type="file" accept="image/*" style="display: none;" onchange="handleEditUserAvatar(event)"></label>
+                        </div>
+                        <button class="account-btn" onclick="saveAccountEdits()">Save Profile Edits</button>
                         <button class="account-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; margin-top: 8px;" onclick="logoutAccount()">Sign Out</button>
                     </div>
                 </div>
             </div>
 
+            <!-- Analytics Tab -->
             <div id="tab-analytics" class="settings-tab-content">
-                <div class="analytics-summary">
-                    <div class="analytics-metric">
-                        <div class="analytics-metric-label">Total Time (7 Days)</div>
-                        <div id="analytics-total-time" class="analytics-metric-value">0m</div>
-                    </div>
-                    <div class="analytics-metric">
-                        <div class="analytics-metric-label">Games Played</div>
-                        <div id="analytics-total-games" class="analytics-metric-value">0</div>
-                    </div>
-                </div>
-
-                <div class="chart-container">
-                    <div class="chart-title">Past Week Activity</div>
-                    <div class="chart-bars" id="chart-bars-container"></div>
-                </div>
-
                 <div class="settings-group">
-                    <div class="settings-group-title">Recent Game History</div>
-                    <div class="history-list" id="history-list-container">
-                        <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>
-                    </div>
+                    <div class="settings-group-title">Playtime & Stats</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">Your game history is tracked automatically in the cloud.</div>
                 </div>
             </div>
 
@@ -1155,9 +589,10 @@ def generate_arcade():
             </div>
         </div>
 
-        <div id="recent-bar-container">
-            <div class="recent-section-title">Recent Games</div>
-            <div class="recent-scroll-wrapper" id="recent-scroll-list"></div>
+        <!-- Favorites Horizontal Bar -->
+        <div id="favorites-bar-container">
+            <div class="favorites-section-title">Favorite Games</div>
+            <div class="favorites-scroll-wrapper" id="favorites-scroll-list"></div>
         </div>
 
         <div id="browse-view">
@@ -1190,33 +625,37 @@ __CARDS_PLACEHOLDER__
         const searchBar = document.getElementById('game-search');
         const gameCards = document.querySelectorAll('.game-card');
         const settingsModal = document.getElementById('settings-modal');
-        const fpsToggle = document.getElementById('fps-toggle');
         const fpsOverlay = document.getElementById('fps-overlay');
 
         let isGameRunning = false;
         let showFps = false;
         let fpsInterval = null;
-        let selectedAvatarEmoji = '👾';
+        let temporaryAvatarData = '👾';
 
-        // JSONBin Cloud Config
         const JSONBIN_BIN_ID = '6acbbc99ffd5d1605361ea78';
         const JSONBIN_API_KEY = '$2a$10$kGKr/g4JvRiMS38uIrheZuMovM7JzvL0/OpwdqgNETjl.itPCxZbS';
 
-        let currentGameName = '';
-        let gameStartTime = 0;
-        let sessionTimerInterval = null;
-
         let arcadeData = JSON.parse(localStorage.getItem('arcadeAnalytics')) || {
+            favorites: [],
             weeklyMinutes: [0, 0, 0, 0, 0, 0, 0],
-            history: [],
-            recentGames: []
+            history: []
         };
 
         let currentAccount = JSON.parse(localStorage.getItem('arcadeAccount')) || null;
+        let userSettings = JSON.parse(localStorage.getItem('userCustomSettings')) || { accent: '#00ff88', wallpaper: '' };
+
+        // Apply saved custom settings on load
+        if (userSettings.accent) {
+            document.documentElement.style.setProperty('--accent-green', userSettings.accent);
+            document.getElementById('theme-color-wheel').value = userSettings.accent;
+        }
+        if (userSettings.wallpaper) {
+            dashboardContainer.style.background = `url(${userSettings.wallpaper}) no-repeat center center fixed`;
+            dashboardContainer.style.backgroundSize = 'cover';
+        }
 
         function openSettingsModal() {
             settingsModal.style.display = 'flex';
-            updateAnalyticsUI();
             checkAccountUIState();
         }
 
@@ -1227,21 +666,136 @@ __CARDS_PLACEHOLDER__
         function switchSettingsTab(tabName, btnElement) {
             document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.settings-tab-content').forEach(content => content.classList.remove('active'));
-
             btnElement.classList.add('active');
             document.getElementById('tab-' + tabName).classList.add('active');
+        }
 
-            if (tabName === 'analytics') {
-                updateAnalyticsUI();
+        // --- Custom Theme & Wallpaper Functions ---
+        function setCustomThemeColor(colorHex) {
+            document.documentElement.style.setProperty('--accent-green', colorHex);
+            userSettings.accent = colorHex;
+            localStorage.setItem('userCustomSettings', JSON.stringify(userSettings));
+        }
+
+        function resetThemeColor() {
+            setCustomThemeColor('#00ff88');
+            document.getElementById('theme-color-wheel').value = '#00ff88';
+        }
+
+        function uploadCustomWallpaper(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                userSettings.wallpaper = e.target.result;
+                dashboardContainer.style.background = `url(${userSettings.wallpaper}) no-repeat center center fixed`;
+                dashboardContainer.style.backgroundSize = 'cover';
+                localStorage.setItem('userCustomSettings', JSON.stringify(userSettings));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetWallpaper() {
+            userSettings.wallpaper = '';
+            dashboardContainer.style.background = 'var(--custom-bg-gradient)';
+            localStorage.setItem('userCustomSettings', JSON.stringify(userSettings));
+        }
+
+        // --- Image Cropper Helper for Circular Profile Pic ---
+        function cropImageToCircle(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const size = Math.min(img.width, img.height);
+                    canvas.width = 150;
+                    canvas.height = 150;
+                    const ctx = canvas.getContext('2d');
+                    ctx.beginPath();
+                    ctx.arc(75, 75, 75, 0, Math.PI * 2);
+                    ctx.clip();
+                    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150);
+                    callback(canvas.toDataURL('image/png'));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleNewUserAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                cropImageToCircle(file, (dataUrl) => {
+                    temporaryAvatarData = dataUrl;
+                });
             }
         }
 
-        async function selectAvatar(emoji, element) {
-            selectedAvatarEmoji = emoji;
-            document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
+        function handleEditUserAvatar(event) {
+            const file = event.target.files[0];
+            if (file && currentAccount) {
+                cropImageToCircle(file, (dataUrl) => {
+                    currentAccount.avatar = dataUrl;
+                    localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
+                    checkAccountUIState();
+                    cloudSyncSave();
+                });
+            }
         }
 
+        // --- Favorites Bar Management ---
+        function updateFavoritesBar() {
+            const barContainer = document.getElementById('favorites-bar-container');
+            const scrollList = document.getElementById('favorites-scroll-list');
+            scrollList.innerHTML = '';
+
+            if (!arcadeData.favorites || arcadeData.favorites.length === 0) {
+                barContainer.classList.remove('visible');
+                return;
+            }
+
+            barContainer.classList.add('visible');
+            arcadeData.favorites.forEach(game => {
+                const chip = document.createElement('div');
+                chip.className = 'favorite-chip';
+                chip.textContent = game.name;
+                chip.onclick = () => launchGame(game.path, game.name);
+                scrollList.appendChild(chip);
+            });
+
+            // Update star icons on main grid cards
+            document.querySelectorAll('.game-card').forEach(card => {
+                const title = card.querySelector('.game-title').textContent;
+                const starBtn = card.querySelector('.favorite-star-btn');
+                const isFav = arcadeData.favorites.some(f => f.name === title);
+                if (isFav) {
+                    starBtn.textContent = '★';
+                    starBtn.classList.add('active');
+                } else {
+                    starBtn.textContent = '☆';
+                    starBtn.classList.remove('active');
+                }
+            });
+        }
+
+        function toggleFavorite(event, gameName, gamePath) {
+            event.stopPropagation();
+            if (!arcadeData.favorites) arcadeData.favorites = [];
+            
+            const index = arcadeData.favorites.findIndex(f => f.name === gameName);
+            if (index !== -1) {
+                arcadeData.favorites.splice(index, 1);
+            } else {
+                arcadeData.favorites.push({ name: gameName, path: gamePath });
+            }
+
+            localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
+            updateFavoritesBar();
+            if (currentAccount) cloudSyncSave();
+        }
+
+        // --- Cloud Authentication & Sync ---
         async function cloudAuthAction(actionType) {
             const usernameInput = document.getElementById('acc-username').value.trim();
             const passcodeInput = document.getElementById('acc-passcode').value.trim();
@@ -1269,43 +823,42 @@ __CARDS_PLACEHOLDER__
                     const newUser = {
                         username: usernameInput,
                         passcode: passcodeInput,
-                        avatar: selectedAvatarEmoji,
+                        avatar: temporaryAvatarData,
                         data: arcadeData
                     };
                     db.users.push(newUser);
-                    currentAccount = { username: usernameInput, passcode: passcodeInput, avatar: selectedAvatarEmoji };
+                    currentAccount = { username: usernameInput, passcode: passcodeInput, avatar: temporaryAvatarData };
                 } else {
                     if (userIndex === -1) {
-                        alert('Account not found. Please create an account first.');
+                        alert('Account not found.');
                         return;
                     }
                     if (db.users[userIndex].passcode !== passcodeInput) {
                         alert('Incorrect passcode.');
                         return;
                     }
-                    currentAccount = { username: db.users[userIndex].username, passcode: db.users[userIndex].passcode, avatar: db.users[userIndex].avatar };
+                    currentAccount = { 
+                        username: db.users[userIndex].username, 
+                        passcode: db.users[userIndex].passcode, 
+                        avatar: db.users[userIndex].avatar || '👾' 
+                    };
                     if (db.users[userIndex].data) {
                         arcadeData = db.users[userIndex].data;
                         localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
-                        updateRecentBar();
+                        updateFavoritesBar();
                     }
                 }
 
                 await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
                     body: JSON.stringify(db)
                 });
 
                 localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
                 checkAccountUIState();
-                alert(`Successfully authenticated as ${usernameInput}!`);
             } catch (err) {
                 console.error(err);
-                alert('Cloud connection error. Check your internet connection.');
             }
         }
 
@@ -1323,27 +876,32 @@ __CARDS_PLACEHOLDER__
                 if (userIndex !== -1) {
                     db.users[userIndex].data = arcadeData;
                     db.users[userIndex].avatar = currentAccount.avatar;
-                } else {
-                    db.users.push({
-                        username: currentAccount.username,
-                        passcode: currentAccount.passcode,
-                        avatar: currentAccount.avatar,
-                        data: arcadeData
-                    });
+                    db.users[userIndex].passcode = currentAccount.passcode;
+                    db.users[userIndex].username = currentAccount.username;
                 }
 
                 await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
                     body: JSON.stringify(db)
                 });
             } catch (err) {
                 console.error(err);
-                alert('Failed to sync to cloud.');
             }
+        }
+
+        function saveAccountEdits() {
+            if (!currentAccount) return;
+            const newName = document.getElementById('edit-username').value.trim();
+            const newPass = document.getElementById('edit-passcode').value.trim();
+
+            if (newName) currentAccount.username = newName;
+            if (newPass) currentAccount.passcode = newPass;
+
+            localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
+            checkAccountUIState();
+            cloudSyncSave();
+            alert('Profile updated successfully!');
         }
 
         function logoutAccount() {
@@ -1360,210 +918,22 @@ __CARDS_PLACEHOLDER__
                 loggedOutDiv.style.display = 'none';
                 loggedInDiv.style.display = 'block';
                 document.getElementById('profile-username-display').textContent = currentAccount.username;
-                document.getElementById('profile-avatar-display').textContent = currentAccount.avatar;
+                document.getElementById('edit-username').value = currentAccount.username;
+                
+                const avatarBox = document.getElementById('profile-avatar-box');
+                if (currentAccount.avatar.startsWith('data:image')) {
+                    avatarBox.innerHTML = `<img src="${currentAccount.avatar}" alt="Avatar">`;
+                } else {
+                    avatarBox.textContent = currentAccount.avatar;
+                }
             } else {
                 loggedOutDiv.style.display = 'block';
                 loggedInDiv.style.display = 'none';
             }
         }
 
-        function updateRecentBar() {
-            const recentBarContainer = document.getElementById('recent-bar-container');
-            const recentScrollList = document.getElementById('recent-scroll-list');
-            recentScrollList.innerHTML = '';
-
-            if (!arcadeData.recentGames || arcadeData.recentGames.length === 0) {
-                recentBarContainer.classList.remove('visible');
-                return;
-            }
-
-            recentBarContainer.classList.add('visible');
-            arcadeData.recentGames.forEach(game => {
-                const chip = document.createElement('div');
-                chip.className = 'recent-chip';
-                chip.textContent = game.name;
-                chip.onclick = () => launchGame(game.path, game.name);
-                recentScrollList.appendChild(chip);
-            });
-        }
-
-        function addRecentGame(gameName, gamePath) {
-            if (!arcadeData.recentGames) arcadeData.recentGames = [];
-            arcadeData.recentGames = arcadeData.recentGames.filter(g => g.name !== gameName);
-            arcadeData.recentGames.unshift({ name: gameName, path: gamePath });
-            if (arcadeData.recentGames.length > 8) arcadeData.recentGames.pop();
-            localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
-            updateRecentBar();
-            if (currentAccount) cloudSyncSave();
-        }
-
-        function recordPlayTime(gameName, secondsElapsed) {
-            if (secondsElapsed <= 0) return;
-            const minutesToAdd = secondsElapsed / 60;
-            const todayIndex = new Date().getDay();
-
-            arcadeData.weeklyMinutes[todayIndex] += minutesToAdd;
-
-            const existingEntry = arcadeData.history.find(h => h.name === gameName);
-            if (existingEntry) {
-                existingEntry.duration += secondsElapsed;
-                existingEntry.timestamp = Date.now();
-            } else {
-                arcadeData.history.unshift({
-                    name: gameName,
-                    duration: secondsElapsed,
-                    timestamp: Date.now()
-                });
-            }
-
-            if (arcadeData.history.length > 10) {
-                arcadeData.history.pop();
-            }
-
-            localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
-            if (currentAccount) cloudSyncSave();
-        }
-
-        function formatDuration(totalSeconds) {
-            if (totalSeconds < 60) return `${Math.round(totalSeconds)}s`;
-            const mins = Math.floor(totalSeconds / 60);
-            if (mins < 60) return `${mins}m`;
-            const hrs = (mins / 60).toFixed(1);
-            return `${hrs}h`;
-        }
-
-        function updateAnalyticsUI() {
-            const totalMinutes = arcadeData.weeklyMinutes.reduce((a, b) => a + b, 0);
-            document.getElementById('analytics-total-time').textContent = formatDuration(totalMinutes * 60);
-            document.getElementById('analytics-total-games').textContent = arcadeData.history.length;
-
-            const chartContainer = document.getElementById('chart-bars-container');
-            chartContainer.innerHTML = '';
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const maxMins = Math.max(...arcadeData.weeklyMinutes, 1);
-
-            arcadeData.weeklyMinutes.forEach((mins, idx) => {
-                const heightPercent = Math.min(Math.max((mins / maxMins) * 100, 4), 100);
-                
-                const col = document.createElement('div');
-                col.className = 'chart-bar-col';
-                col.innerHTML = `
-                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">${formatDuration(mins * 60)}</div>
-                    <div class="chart-bar" style="height: ${heightPercent}%;"></div>
-                    <div class="chart-day-label">${days[idx]}</div>
-                `;
-                chartContainer.appendChild(col);
-            });
-
-            const historyContainer = document.getElementById('history-list-container');
-            historyContainer.innerHTML = '';
-
-            if (arcadeData.history.length === 0) {
-                historyContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>';
-            } else {
-                arcadeData.history.forEach(item => {
-                    const row = document.createElement('div');
-                    row.className = 'history-item';
-                    row.innerHTML = `
-                        <span class="history-game-name">${item.name}</span>
-                        <span class="history-game-time">${formatDuration(item.duration)}</span>
-                    `;
-                    historyContainer.appendChild(row);
-                });
-            }
-        }
-
-        function setAccentColor(colorHex, element) {
-            document.documentElement.style.setProperty('--accent-green', colorHex);
-            document.querySelectorAll('.swatch').forEach(sw => sw.classList.remove('active'));
-            element.classList.add('active');
-        }
-
-        function toggleHighContrast(checkbox) {
-            if (checkbox.checked) {
-                document.body.classList.add('high-contrast');
-            } else {
-                document.body.classList.remove('high-contrast');
-            }
-        }
-
-        function togglePerformanceMode(checkbox) {
-            if (checkbox.checked) {
-                document.body.classList.add('performance-mode');
-            } else {
-                document.body.classList.remove('performance-mode');
-            }
-        }
-
-        function toggleGlobalMute(checkbox) {
-            if (checkbox.checked) {
-                document.body.classList.add('site-muted');
-                muteAllAudioElements(true);
-            } else {
-                document.body.classList.remove('site-muted');
-                muteAllAudioElements(false);
-            }
-        }
-
-        function muteAllAudioElements(mute) {
-            const mediaEls = document.querySelectorAll('audio, video');
-            mediaEls.forEach(el => el.muted = mute);
-
-            try {
-                if (iframe && iframe.contentWindow) {
-                    const iframeMedia = iframe.contentWindow.document.querySelectorAll('audio, video');
-                    iframeMedia.forEach(el => el.muted = mute);
-                }
-            } catch (e) {}
-        }
-
-        function toggleFpsSetting(checkbox) {
-            showFps = checkbox.checked;
-            if (isGameRunning) {
-                updateFpsVisibility();
-            }
-        }
-
-        function updateFpsVisibility() {
-            if (isGameRunning && showFps) {
-                fpsOverlay.style.display = 'block';
-                startFpsCounter();
-            } else {
-                fpsOverlay.style.display = 'none';
-                stopFpsCounter();
-            }
-        }
-
-        function startFpsCounter() {
-            stopFpsCounter();
-            let frameCount = 0;
-            let lastTime = performance.now();
-
-            function measureFps(currentTime) {
-                frameCount++;
-                if (currentTime - lastTime >= 1000) {
-                    let fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
-                    fpsOverlay.textContent = `FPS: ${fps}`;
-                    frameCount = 0;
-                    lastTime = currentTime;
-                }
-                if (isGameRunning && showFps) {
-                    fpsInterval = requestAnimationFrame(measureFps);
-                }
-            }
-            fpsInterval = requestAnimationFrame(measureFps);
-        }
-
-        function stopFpsCounter() {
-            if (fpsInterval) {
-                cancelAnimationFrame(fpsInterval);
-                fpsInterval = null;
-            }
-        }
-
         searchBar.addEventListener('input', (e) => {
             const filterValue = e.target.value.toLowerCase().trim();
-            
             gameCards.forEach(card => {
                 const gameTitle = card.getAttribute('data-title');
                 if (gameTitle.includes(filterValue)) {
@@ -1577,36 +947,13 @@ __CARDS_PLACEHOLDER__
         function launchGame(gameFilePath, gameTitle) {
             dashboardContainer.style.display = 'none';
             playView.style.display = 'block';
-            
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
-            updateFpsVisibility();
-            addRecentGame(gameTitle, gameFilePath);
-
-            currentGameName = gameTitle;
-            gameStartTime = Date.now();
-            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-            sessionTimerInterval = setInterval(() => {
-                const elapsedSec = (Date.now() - gameStartTime) / 1000;
-                if (elapsedSec >= 30) {
-                    recordPlayTime(currentGameName, 30);
-                    gameStartTime = Date.now();
-                }
-            }, 30000);
-
-            if (document.getElementById('mute-toggle').checked) {
-                setTimeout(() => muteAllAudioElements(true), 500);
-            }
-            
-            setTimeout(() => {
-                iframe.focus();
-            }, 100);
+            setTimeout(() => iframe.focus(), 100);
         }
 
         function openPauseMenu() {
-            if (isGameRunning) {
-                pauseOverlay.style.display = 'flex';
-            }
+            if (isGameRunning) pauseOverlay.style.display = 'flex';
         }
 
         function resumeGame() {
@@ -1615,37 +962,23 @@ __CARDS_PLACEHOLDER__
         }
 
         function exitToHub() {
-            if (isGameRunning && gameStartTime) {
-                const elapsedSec = (Date.now() - gameStartTime) / 1000;
-                recordPlayTime(currentGameName, elapsedSec);
-                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-            }
-
             iframe.src = ""; 
             pauseOverlay.style.display = 'none';
             playView.style.display = 'none';
             dashboardContainer.style.display = 'flex';
             isGameRunning = false;
-            updateFpsVisibility();
-            
-            setTimeout(() => {
-                searchBar.focus();
-            }, 50);
+            setTimeout(() => searchBar.focus(), 50);
         }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && isGameRunning) {
-                if (pauseOverlay.style.display === 'flex') {
-                    resumeGame();
-                } else {
-                    openPauseMenu();
-                }
+                if (pauseOverlay.style.display === 'flex') resumeGame();
+                else openPauseMenu();
             }
         });
 
-        updateRecentBar();
+        updateFavoritesBar();
     </script>
-
 </body>
 </html>
 """
@@ -1655,7 +988,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Configured with JSONBin cloud sync system.")
+    print(f"Arcade sync successful! Configured with favorites, color wheel, custom circular avatar cropper, and wallpaper backgrounds.")
 
 if __name__ == '__main__':
     generate_arcade()
