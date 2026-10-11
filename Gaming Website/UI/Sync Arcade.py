@@ -1245,9 +1245,9 @@ __CARDS_PLACEHOLDER__
         let fpsInterval = null;
         let selectedAvatarEmoji = '👾';
 
-        // JSONBin Cloud Config
-        const JSONBIN_BIN_ID = '6acbbc99ffd5d1605361ea78';
-        const JSONBIN_API_KEY = '$2a$10$kGKr/g4JvRiMS38uIrheZuMovM7JzvL0/OpwdqgNETjl.itPCxZbS';
+        // npoint Cloud Config
+        const NPOINT_BIN_ID = '122c33a57a405cfd2b6d';
+        const NPOINT_API_URL = `https://api.npoint.io/${NPOINT_BIN_ID}`;
 
         // Analytics & Account State Variables
         let currentGameName = '';
@@ -1284,7 +1284,7 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- JSONBin Cloud Account Integration ---
+        // --- npoint Cloud Account Integration ---
         async function selectAvatar(emoji, element) {
             selectedAvatarEmoji = emoji;
             document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
@@ -1301,13 +1301,10 @@ __CARDS_PLACEHOLDER__
             }
 
             try {
-                // Fetch current cloud database
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
-                });
-                const result = await response.json();
-                let db = result.record || { users: [] };
-                if (!db.users) db.users = [];
+                // Fetch current npoint database
+                const response = await fetch(NPOINT_API_URL);
+                let db = await response.json();
+                if (!db || !db.users) db = { users: [] };
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === usernameInput.toLowerCase());
 
@@ -1334,7 +1331,6 @@ __CARDS_PLACEHOLDER__
                         alert('Incorrect passcode.');
                         return;
                     }
-                    // Load user cloud data
                     currentAccount = { username: db.users[userIndex].username, passcode: db.users[userIndex].passcode, avatar: db.users[userIndex].avatar };
                     if (db.users[userIndex].data) {
                         arcadeData = db.users[userIndex].data;
@@ -1343,13 +1339,10 @@ __CARDS_PLACEHOLDER__
                     }
                 }
 
-                // Update cloud bin
-                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
+                // Update npoint bin
+                await fetch(NPOINT_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(db)
                 });
 
@@ -1365,12 +1358,9 @@ __CARDS_PLACEHOLDER__
         async function cloudSyncSave() {
             if (!currentAccount) return;
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
-                });
-                const result = await response.json();
-                let db = result.record || { users: [] };
-                if (!db.users) db.users = [];
+                const response = await fetch(NPOINT_API_URL);
+                let db = await response.json();
+                if (!db || !db.users) db = { users: [] };
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
                 if (userIndex !== -1) {
@@ -1385,12 +1375,9 @@ __CARDS_PLACEHOLDER__
                     });
                 }
 
-                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
+                await fetch(NPOINT_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(db)
                 });
                 alert('Cloud sync successful!');
@@ -1676,7 +1663,7 @@ __CARDS_PLACEHOLDER__
             if (isGameRunning && gameStartTime) {
                 const elapsedSec = (Date.now() - gameStartTime) / 1000;
                 recordPlayTime(currentGameName, elapsedSec);
-                if (sessionTimerIdentifier) clearInterval(sessionTimerInterval);
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
             }
 
             iframe.src = ""; 
@@ -1714,7 +1701,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Added JSONBin cloud account sync system.")
+    print(f"Arcade sync successful! Configured with npoint cloud sync system.")
 
 if __name__ == '__main__':
     generate_arcade()
