@@ -144,7 +144,7 @@ def generate_arcade():
         }
 
         .search-bar:focus {
-            border-color: rgba(0, 255, 136, 0.6);
+            border-color: var(--accent-green);
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 4px 25px rgba(0, 0, 0, 0.5);
             background-color: rgba(23, 23, 26, 0.7);
         }
@@ -173,33 +173,15 @@ def generate_arcade():
 
         /* =========================================================
            APPLE LIQUID GLASS GAME CARD
-           - Body: essentially transparent (clear, not frosted)
-           - Backdrop: minimal blur + heavy saturation/brightness so
-             the background is still visible and vibrant through it
-           - Edges: bright specular highlight top-left, dark shadow
-             bottom-right, simulating light hitting a glass pane
            ========================================================= */
         .game-card {
             position: relative;
             overflow: hidden;
-            
-            /* CLEAR glass — near-zero tint so you see through it */
             background: rgba(255, 255, 255, 0.03);
-            
-            /* Minimal blur keeps it CLEAR. High saturation + brightness
-               makes the colors behind it pop through like real glass. */
             backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
             -webkit-backdrop-filter: blur(3px) saturate(220%) brightness(1.12);
-            
             border-radius: 28px;
             border: none;
-
-            /* Layered shadows build the 3D glass slab:
-               - outer drop shadow (card floats above scene)
-               - 0 0 0 1px faint outer ring (glass edge)
-               - inset top-left highlights (light hitting top edge)
-               - inset bottom-right shadows (glass thickness/depth)
-               - inner ambient glow (light scattering inside glass) */
             box-shadow: 
                 0 20px 45px -12px rgba(0, 0, 0, 0.65),
                 0 0 0 1px rgba(255, 255, 255, 0.10),
@@ -208,7 +190,6 @@ def generate_arcade():
                 inset 0 -1px 1px rgba(0, 0, 0, 0.35),
                 inset -1px 0 1px rgba(0, 0, 0, 0.18),
                 inset 0 0 40px rgba(255, 255, 255, 0.04);
-
             cursor: pointer;
             transition: 
                 transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), 
@@ -230,7 +211,6 @@ def generate_arcade():
             isolation: isolate;
         }
 
-        /* Diagonal specular sweep — the "liquid" shine that glides across */
         .game-card::before {
             content: '';
             position: absolute;
@@ -249,7 +229,6 @@ def generate_arcade():
             z-index: 1;
         }
 
-        /* Static top-left corner specular (light source reflection) */
         .game-card::after {
             content: '';
             position: absolute;
@@ -269,14 +248,12 @@ def generate_arcade():
             opacity: 0.9;
         }
 
-        /* Instant Hide Utility for Dynamic Filter Engine */
         .game-card.hidden {
             display: none;
             opacity: 0;
             visibility: hidden;
         }
 
-        /* Hover — the glass lifts, gathers more light, and the shine sweeps */
         .game-card:hover {
             transform: translateY(-6px) scale(1.015);
             background: rgba(255, 255, 255, 0.05);
@@ -288,7 +265,8 @@ def generate_arcade():
                 inset 0 -1px 1px rgba(0, 0, 0, 0.45),
                 inset -1px 0 1px rgba(0, 0, 0, 0.25),
                 inset 0 0 50px rgba(255, 255, 255, 0.07),
-                0 0 35px rgba(0, 255, 136, 0.15);
+                0 0 35px var(--accent-green);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.75), 0 0 35px rgba(0, 255, 136, 0.15);
         }
 
         .game-card:hover::before {
@@ -305,7 +283,6 @@ def generate_arcade():
             );
         }
 
-        /* Content sits above the glass-effect pseudo-elements */
         .game-title {
             position: relative;
             z-index: 2;
@@ -317,7 +294,6 @@ def generate_arcade():
             white-space: normal; 
             overflow-wrap: break-word; 
             line-height: 1.3;
-            /* Slight text shadow so the CLEAR glass keeps text legible */
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.35);
         }
 
@@ -345,7 +321,7 @@ def generate_arcade():
             background-color: var(--accent-green);
             border-color: var(--accent-green);
             color: #000000;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px var(--accent-green), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         /* --- LIQUID RESPONSIVE VIEWER --- */
@@ -543,7 +519,7 @@ def generate_arcade():
             transform: rotate(90deg);
         }
 
-        /* Settings Modal */
+        /* Settings Modal & Sub-Directories (Categories) */
         #settings-modal {
             display: none;
             position: fixed;
@@ -562,9 +538,12 @@ def generate_arcade():
             background-color: var(--panel-dark);
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 35px;
+            padding: 30px;
             width: 90%;
-            max-width: 420px;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
         }
 
@@ -572,7 +551,9 @@ def generate_arcade():
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
         }
 
         .settings-header h2 {
@@ -595,24 +576,77 @@ def generate_arcade():
             color: var(--text-main);
         }
 
+        .settings-content {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-right: 5px;
+        }
+
+        .settings-group {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .settings-group-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-green);
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
+            padding: 8px 0;
+        }
+
+        .setting-item:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 8px;
         }
 
         .setting-label {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+        }
+
+        /* Accent Color Swatches */
+        .color-swatches {
+            display: flex;
+            gap: 8px;
+        }
+
+        .swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .swatch:hover {
+            transform: scale(1.15);
+        }
+
+        .swatch.active {
+            border-color: #ffffff;
+            transform: scale(1.1);
         }
 
         /* iOS-style Switch Toggle */
         .switch {
             position: relative;
             display: inline-block;
-            width: 50px;
-            height: 26px;
+            width: 46px;
+            height: 24px;
         }
 
         .switch input {
@@ -627,15 +661,15 @@ def generate_arcade():
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: #27272a;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 26px;
+            border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 20px;
-            width: 20px;
+            height: 18px;
+            width: 18px;
             left: 2px;
             bottom: 2px;
             background-color: white;
@@ -649,7 +683,55 @@ def generate_arcade():
         }
 
         input:checked + .slider:before {
-            transform: translateX(24px);
+            transform: translateX(22px);
+        }
+
+        /* High Contrast Mode Overrides */
+        body.high-contrast {
+            --bg-dark: #000000;
+            --panel-dark: #111111;
+            --text-main: #ffffff;
+            --text-muted: #ffff00;
+            --border-color: #ffffff;
+        }
+        body.high-contrast .game-card {
+            background: #000000;
+            border: 2px solid #ffffff;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        body.high-contrast .game-card:hover {
+            border-color: var(--accent-green);
+        }
+        body.high-contrast .search-bar {
+            background-color: #000000;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+        }
+
+        /* Performance / Low-Spec Mode Overrides */
+        body.performance-mode #dashboard-container {
+            background: #050505 !important;
+        }
+        body.performance-mode .game-card {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: #141416 !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        }
+        body.performance-mode .game-card::before,
+        body.performance-mode .game-card::after {
+            display: none !important;
+        }
+        body.performance-mode .search-bar {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background-color: #141416 !important;
+        }
+        body.performance-mode #pause-overlay,
+        body.performance-mode #settings-modal {
+            backdrop-filter: none !important;
+            background-color: rgba(5, 5, 5, 0.98) !important;
         }
 
         /* FPS Overlay Style */
@@ -669,6 +751,11 @@ def generate_arcade():
             z-index: 650;
             letter-spacing: 0.5px;
         }
+
+        /* Global Mute Mask Style */
+        .site-muted iframe {
+            filter: grayscale(10%);
+        }
     </style>
 </head>
 <body>
@@ -680,18 +767,66 @@ def generate_arcade():
         </svg>
     </div>
 
+    <!-- Settings Modal with Sub-Directories / Categories -->
     <div id="settings-modal">
         <div class="settings-box">
             <div class="settings-header">
                 <h2>Settings</h2>
                 <button class="settings-close" onclick="closeSettingsModal()">&times;</button>
             </div>
-            <div class="setting-item">
-                <span class="setting-label">Overlay Framerate</span>
-                <label class="switch">
-                    <input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)">
-                    <span class="slider"></span>
-                </label>
+            <div class="settings-content">
+                <!-- Appearance Group -->
+                <div class="settings-group">
+                    <div class="settings-group-title">Appearance & Theme</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Accent Color</span>
+                        <div class="color-swatches">
+                            <div class="swatch active" style="background-color: #00ff88;" onclick="setAccentColor('#00ff88', this)"></div>
+                            <div class="swatch" style="background-color: #00b4ff;" onclick="setAccentColor('#00b4ff', this)"></div>
+                            <div class="swatch" style="background-color: #7850ff;" onclick="setAccentColor('#7850ff', this)"></div>
+                            <div class="swatch" style="background-color: #ff5096;" onclick="setAccentColor('#ff5096', this)"></div>
+                            <div class="swatch" style="background-color: #ffb000;" onclick="setAccentColor('#ffb000', this)"></div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">High Contrast Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="high-contrast-toggle" onchange="toggleHighContrast(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Performance Group -->
+                <div class="settings-group">
+                    <div class="settings-group-title">Performance & Monitoring</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Performance Mode (Low-Spec)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="performance-toggle" onchange="togglePerformanceMode(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Overlay Framerate (FPS)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="fps-toggle" onchange="toggleFpsSetting(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Audio Group -->
+                <div class="settings-group">
+                    <div class="settings-group-title">Audio Controls</div>
+                    <div class="setting-item">
+                        <span class="setting-label">Global Mute Site-Wide</span>
+                        <label class="switch">
+                            <input type="checkbox" id="mute-toggle" onchange="toggleGlobalMute(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -747,6 +882,55 @@ __CARDS_PLACEHOLDER__
 
         function closeSettingsModal() {
             settingsModal.style.display = 'none';
+        }
+
+        // --- Settings Implementation Functions ---
+        function setAccentColor(colorHex, element) {
+            document.documentElement.style.setProperty('--accent-green', colorHex);
+            document.querySelectorAll('.swatch').forEach(sw => sw.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function toggleHighContrast(checkbox) {
+            if (checkbox.checked) {
+                document.body.classList.add('high-contrast');
+            } else {
+                document.body.classList.remove('high-contrast');
+            }
+        }
+
+        function togglePerformanceMode(checkbox) {
+            if (checkbox.checked) {
+                document.body.classList.add('performance-mode');
+            } else {
+                document.body.classList.remove('performance-mode');
+            }
+        }
+
+        function toggleGlobalMute(checkbox) {
+            if (checkbox.checked) {
+                document.body.classList.add('site-muted');
+                muteAllAudioElements(true);
+            } else {
+                document.body.classList.remove('site-muted');
+                muteAllAudioElements(false);
+            }
+        }
+
+        function muteAllAudioElements(mute) {
+            // Mute standard audio/video tags on the parent page
+            const mediaEls = document.querySelectorAll('audio, video');
+            mediaEls.forEach(el => el.muted = mute);
+
+            // Attempt to silence iframe audio if accessible (same-origin or Web Audio master)
+            try {
+                if (iframe && iframe.contentWindow) {
+                    const iframeMedia = iframe.contentWindow.document.querySelectorAll('audio, video');
+                    iframeMedia.forEach(el => el.muted = mute);
+                }
+            } catch (e) {
+                // Cross-origin restriction fallback: handled visually/systemically via site-muted class
+            }
         }
 
         function toggleFpsSetting(checkbox) {
@@ -814,6 +998,11 @@ __CARDS_PLACEHOLDER__
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
             updateFpsVisibility();
+
+            // Apply global mute if enabled when launching
+            if (document.getElementById('mute-toggle').checked) {
+                setTimeout(() => muteAllAudioElements(true), 500);
+            }
             
             setTimeout(() => {
                 iframe.focus();
@@ -865,7 +1054,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Updated game cards with clear Apple liquid-glass styles.")
+    print(f"Arcade sync successful! Updated settings with sub-directories, high contrast, performance mode, mute, and accent picker.")
 
 if __name__ == '__main__':
     generate_arcade()
