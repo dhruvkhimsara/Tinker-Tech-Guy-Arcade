@@ -17,10 +17,8 @@ def generate_arcade():
     card_elements = []
     for file_name in game_files:
         display_title = os.path.splitext(file_name)[0]
-        # Fixed pathing: since index.html is in SCRIPT_DIR, we must navigate up to find Games
         relative_path = f"../Games/{file_name}"
         
-        # Safely escape single and double quotes to prevent breaking HTML attributes/JS parameters
         escaped_title = display_title.replace('"', '&quot;').replace("'", "\\'")
         escaped_path = relative_path.replace("'", "\\'")
         
@@ -32,7 +30,6 @@ def generate_arcade():
 
     all_cards_string = "\n\n".join(card_elements)
 
-    # Using standard raw string replacement to avoid curly brace escaping madness in CSS/JS
     html_template = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,7 +70,6 @@ def generate_arcade():
             user-select: none;
         }
 
-        /* --- DASHBOARD WRAPPER --- */
         #dashboard-container {
             display: flex;
             flex-direction: column;
@@ -89,7 +85,6 @@ def generate_arcade():
             overflow-y: auto;
         }
 
-        /* Integrated Cool Cinematic Branding Section */
         .arcade-hero {
             display: flex;
             flex-direction: column;
@@ -114,7 +109,6 @@ def generate_arcade():
             color: var(--accent-green);
         }
 
-        /* Centered High-Tech Search Interface */
         .search-wrapper {
             position: relative;
             width: 100%;
@@ -157,7 +151,6 @@ def generate_arcade():
             opacity: 0.7;
         }
 
-        /* --- RECENT GAMES HORIZONTAL SCROLL BAR --- */
         #recent-bar-container {
             width: 100%;
             max-width: 1400px;
@@ -219,7 +212,6 @@ def generate_arcade():
             transform: translateY(-2px);
         }
 
-        /* Dynamic Fluid Matrix Layout */
         #browse-view {
             display: flex;
             flex-wrap: wrap;
@@ -232,9 +224,6 @@ def generate_arcade():
             align-content: start;
         }
 
-        /* =========================================================
-           APPLE LIQUID GLASS GAME CARD
-           ========================================================= */
         .game-card {
             position: relative;
             overflow: hidden;
@@ -329,20 +318,6 @@ def generate_arcade():
                 0 0 35px rgba(0, 255, 136, 0.15);
         }
 
-        .game-card:hover::before {
-            transform: translateX(130%) skewX(-6deg);
-        }
-
-        .game-card:hover::after {
-            opacity: 1;
-            background: radial-gradient(
-                circle at 0% 0%,
-                rgba(255, 255, 255, 0.4) 0%,
-                rgba(255, 255, 255, 0.1) 25%,
-                transparent 55%
-            );
-        }
-
         .game-title {
             position: relative;
             z-index: 2;
@@ -384,7 +359,6 @@ def generate_arcade():
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
-        /* --- LIQUID RESPONSIVE VIEWER --- */
         #play-view {
             display: none;
             position: fixed;
@@ -436,7 +410,6 @@ def generate_arcade():
             padding-bottom: 10px;
         }
 
-        /* --- ESCAPE MENU MODAL OVERLAY --- */
         #pause-overlay {
             display: none; 
             position: fixed;
@@ -514,7 +487,6 @@ def generate_arcade():
             color: #ef4444;
         }
 
-        /* --- NEW UI ELEMENTS STYLING --- */
         .top-left-link {
             position: fixed;
             top: 20px;
@@ -579,7 +551,6 @@ def generate_arcade():
             transform: rotate(90deg);
         }
 
-        /* Settings Modal & Tabs */
         #settings-modal {
             display: none;
             position: fixed;
@@ -636,7 +607,6 @@ def generate_arcade():
             color: var(--text-main);
         }
 
-        /* Settings Tabs Navigation */
         .settings-tabs {
             display: flex;
             gap: 8px;
@@ -711,7 +681,6 @@ def generate_arcade():
             font-size: 0.9rem;
         }
 
-        /* Account Tab Styles */
         .account-form-group {
             display: flex;
             flex-direction: column;
@@ -799,7 +768,6 @@ def generate_arcade():
             font-size: 1.6rem;
         }
 
-        /* Analytics Tab Styles */
         .analytics-summary {
             display: flex;
             justify-content: space-between;
@@ -903,7 +871,6 @@ def generate_arcade():
             font-size: 0.8rem;
         }
 
-        /* Accent Color Swatches */
         .color-swatches {
             display: flex;
             gap: 8px;
@@ -927,7 +894,6 @@ def generate_arcade():
             transform: scale(1.1);
         }
 
-        /* iOS-style Switch Toggle */
         .switch {
             position: relative;
             display: inline-block;
@@ -972,7 +938,6 @@ def generate_arcade():
             transform: translateX(22px);
         }
 
-        /* High Contrast Mode Overrides */
         body.high-contrast {
             --bg-dark: #000000;
             --panel-dark: #111111;
@@ -995,7 +960,6 @@ def generate_arcade():
             color: #ffffff;
         }
 
-        /* Performance / Low-Spec Mode Overrides */
         body.performance-mode #dashboard-container {
             background: #050505 !important;
         }
@@ -1015,7 +979,6 @@ def generate_arcade():
             background-color: #141416 !important;
         }
 
-        /* FPS Overlay Style */
         #fps-overlay {
             display: none;
             position: absolute;
@@ -1047,7 +1010,6 @@ def generate_arcade():
         </svg>
     </div>
 
-    <!-- Settings Modal with Tabs -->
     <div id="settings-modal">
         <div class="settings-box">
             <div class="settings-header">
@@ -1055,14 +1017,12 @@ def generate_arcade():
                 <button class="settings-close" onclick="closeSettingsModal()">&times;</button>
             </div>
 
-            <!-- Tabs Header -->
             <div class="settings-tabs">
                 <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('account', this)">Account & Cloud Sync</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
             </div>
 
-            <!-- Tab 1: General Preferences -->
             <div id="tab-general" class="settings-tab-content active">
                 <div class="settings-group">
                     <div class="settings-group-title">Appearance & Theme</div>
@@ -1115,7 +1075,6 @@ def generate_arcade():
                 </div>
             </div>
 
-            <!-- Tab 2: Account & Cloud Sync -->
             <div id="tab-account" class="settings-tab-content">
                 <div id="account-logged-out" style="display: block;">
                     <div class="settings-group">
@@ -1160,7 +1119,6 @@ def generate_arcade():
                 </div>
             </div>
 
-            <!-- Tab 3: Playtime & Analytics -->
             <div id="tab-analytics" class="settings-tab-content">
                 <div class="analytics-summary">
                     <div class="analytics-metric">
@@ -1175,9 +1133,7 @@ def generate_arcade():
 
                 <div class="chart-container">
                     <div class="chart-title">Past Week Activity</div>
-                    <div class="chart-bars" id="chart-bars-container">
-                        <!-- Populated dynamically -->
-                    </div>
+                    <div class="chart-bars" id="chart-bars-container"></div>
                 </div>
 
                 <div class="settings-group">
@@ -1199,12 +1155,9 @@ def generate_arcade():
             </div>
         </div>
 
-        <!-- Recent Games Horizontal Bar -->
         <div id="recent-bar-container">
             <div class="recent-section-title">Recent Games</div>
-            <div class="recent-scroll-wrapper" id="recent-scroll-list">
-                <!-- Populated dynamically -->
-            </div>
+            <div class="recent-scroll-wrapper" id="recent-scroll-list"></div>
         </div>
 
         <div id="browse-view">
@@ -1245,11 +1198,10 @@ __CARDS_PLACEHOLDER__
         let fpsInterval = null;
         let selectedAvatarEmoji = '👾';
 
-        // npoint Cloud Config
-        const NPOINT_BIN_ID = '122c33a57a405cfd2b6d';
-        const NPOINT_API_URL = `https://api.npoint.io/${NPOINT_BIN_ID}`;
+        // JSONBin Cloud Config
+        const JSONBIN_BIN_ID = '6acbbc99ffd5d1605361ea78';
+        const JSONBIN_API_KEY = '$2a$10$kGKr/g4JvRiMS38uIrheZuMovM7JzvL0/OpwdqgNETjl.itPCxZbS';
 
-        // Analytics & Account State Variables
         let currentGameName = '';
         let gameStartTime = 0;
         let sessionTimerInterval = null;
@@ -1284,7 +1236,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- npoint Cloud Account Integration ---
         async function selectAvatar(emoji, element) {
             selectedAvatarEmoji = emoji;
             document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
@@ -1301,10 +1252,12 @@ __CARDS_PLACEHOLDER__
             }
 
             try {
-                // Fetch current npoint database
-                const response = await fetch(NPOINT_API_URL);
-                let db = await response.json();
-                if (!db || !db.users) db = { users: [] };
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                const result = await response.json();
+                let db = result.record || { users: [] };
+                if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === usernameInput.toLowerCase());
 
@@ -1322,7 +1275,6 @@ __CARDS_PLACEHOLDER__
                     db.users.push(newUser);
                     currentAccount = { username: usernameInput, passcode: passcodeInput, avatar: selectedAvatarEmoji };
                 } else {
-                    // Login
                     if (userIndex === -1) {
                         alert('Account not found. Please create an account first.');
                         return;
@@ -1339,10 +1291,12 @@ __CARDS_PLACEHOLDER__
                     }
                 }
 
-                // Update npoint bin
-                await fetch(NPOINT_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
                     body: JSON.stringify(db)
                 });
 
@@ -1358,9 +1312,12 @@ __CARDS_PLACEHOLDER__
         async function cloudSyncSave() {
             if (!currentAccount) return;
             try {
-                const response = await fetch(NPOINT_API_URL);
-                let db = await response.json();
-                if (!db || !db.users) db = { users: [] };
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                const result = await response.json();
+                let db = result.record || { users: [] };
+                if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
                 if (userIndex !== -1) {
@@ -1375,9 +1332,12 @@ __CARDS_PLACEHOLDER__
                     });
                 }
 
-                await fetch(NPOINT_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
                     body: JSON.stringify(db)
                 });
                 alert('Cloud sync successful!');
@@ -1408,7 +1368,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- Recent Games Bar UI ---
         function updateRecentBar() {
             const recentBarContainer = document.getElementById('recent-bar-container');
             const recentScrollList = document.getElementById('recent-scroll-list');
@@ -1439,7 +1398,6 @@ __CARDS_PLACEHOLDER__
             if (currentAccount) cloudSyncSave();
         }
 
-        // --- Analytics & History Functions ---
         function recordPlayTime(gameName, secondsElapsed) {
             if (secondsElapsed <= 0) return;
             const minutesToAdd = secondsElapsed / 60;
@@ -1516,7 +1474,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- Settings Implementation Functions ---
         function setAccentColor(colorHex, element) {
             document.documentElement.style.setProperty('--accent-green', colorHex);
             document.querySelectorAll('.swatch').forEach(sw => sw.classList.remove('active'));
@@ -1605,7 +1562,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        // --- Client-Side Search Processing Engine ---
         searchBar.addEventListener('input', (e) => {
             const filterValue = e.target.value.toLowerCase().trim();
             
@@ -1688,7 +1644,6 @@ __CARDS_PLACEHOLDER__
             }
         });
 
-        // Initialize recent bar on load
         updateRecentBar();
     </script>
 
@@ -1701,7 +1656,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Configured with npoint cloud sync system.")
+    print(f"Arcade sync successful! Configured with JSONBin cloud sync system.")
 
 if __name__ == '__main__':
     generate_arcade()
