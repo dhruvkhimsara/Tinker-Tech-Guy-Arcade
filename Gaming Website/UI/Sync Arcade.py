@@ -24,7 +24,7 @@ def generate_arcade():
         escaped_title = display_title.replace('"', '&quot;').replace("'", "\\'")
         escaped_path = relative_path.replace("'", "\\'")
         
-        card_html = f"""            <div class="game-card" data-title="{escaped_title.lower()}" onclick="launchGame('{escaped_path}')">
+        card_html = f"""            <div class="game-card" data-title="{escaped_title.lower()}" onclick="launchGame('{escaped_path}', '{display_title.replace("'", "\\'")}')">
                 <div class="game-title">{display_title}</div>
                 <button class="btn-launch">PLAY</button>
             </div>"""
@@ -74,7 +74,6 @@ def generate_arcade():
         }
 
         /* --- DASHBOARD WRAPPER --- */
-        /* Ambient color blobs give the CLEAR glass something colorful to refract through */
         #dashboard-container {
             display: flex;
             flex-direction: column;
@@ -265,8 +264,7 @@ def generate_arcade():
                 inset 0 -1px 1px rgba(0, 0, 0, 0.45),
                 inset -1px 0 1px rgba(0, 0, 0, 0.25),
                 inset 0 0 50px rgba(255, 255, 255, 0.07),
-                0 0 35px var(--accent-green);
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.75), 0 0 35px rgba(0, 255, 136, 0.15);
+                0 0 35px rgba(0, 255, 136, 0.15);
         }
 
         .game-card:hover::before {
@@ -321,7 +319,7 @@ def generate_arcade():
             background-color: var(--accent-green);
             border-color: var(--accent-green);
             color: #000000;
-            box-shadow: 0 0 20px var(--accent-green), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         /* --- LIQUID RESPONSIVE VIEWER --- */
@@ -519,7 +517,7 @@ def generate_arcade():
             transform: rotate(90deg);
         }
 
-        /* Settings Modal & Sub-Directories (Categories) */
+        /* Settings Modal & Sub-Directories / Tabs */
         #settings-modal {
             display: none;
             position: fixed;
@@ -540,7 +538,7 @@ def generate_arcade():
             border-radius: 20px;
             padding: 30px;
             width: 90%;
-            max-width: 500px;
+            max-width: 560px;
             max-height: 85vh;
             display: flex;
             flex-direction: column;
@@ -576,12 +574,44 @@ def generate_arcade():
             color: var(--text-main);
         }
 
-        .settings-content {
-            overflow-y: auto;
+        /* Settings Tabs Navigation */
+        .settings-tabs {
             display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+        }
+
+        .settings-tab-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-tab-btn.active {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .settings-tab-content {
+            display: none;
+            overflow-y: auto;
             flex-direction: column;
             gap: 20px;
             padding-right: 5px;
+            max-height: 50vh;
+        }
+
+        .settings-tab-content.active {
+            display: flex;
         }
 
         .settings-group {
@@ -615,6 +645,112 @@ def generate_arcade():
         .setting-label {
             font-weight: 600;
             font-size: 0.9rem;
+        }
+
+        /* Analytics Tab Styles */
+        .analytics-summary {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+        }
+
+        .analytics-metric {
+            text-align: center;
+            flex: 1;
+        }
+
+        .analytics-metric-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--accent-green);
+            margin-top: 4px;
+        }
+
+        .analytics-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Weekly Chart */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .chart-bars {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 120px;
+            padding-top: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .chart-bar {
+            width: 22px;
+            background: var(--accent-green);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.4s ease;
+            min-height: 4px;
+        }
+
+        .chart-day-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        /* Play History List */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .history-game-name {
+            font-weight: 700;
+        }
+
+        .history-game-time {
+            color: var(--text-muted);
+            font-size: 0.8rem;
         }
 
         /* Accent Color Swatches */
@@ -767,15 +903,22 @@ def generate_arcade():
         </svg>
     </div>
 
-    <!-- Settings Modal with Sub-Directories / Categories -->
+    <!-- Settings Modal with Sub-Directories / Tabs -->
     <div id="settings-modal">
         <div class="settings-box">
             <div class="settings-header">
                 <h2>Settings</h2>
                 <button class="settings-close" onclick="closeSettingsModal()">&times;</button>
             </div>
-            <div class="settings-content">
-                <!-- Appearance Group -->
+
+            <!-- Tabs Header -->
+            <div class="settings-tabs">
+                <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
+                <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
+            </div>
+
+            <!-- Tab 1: General Preferences -->
+            <div id="tab-general" class="settings-tab-content active">
                 <div class="settings-group">
                     <div class="settings-group-title">Appearance & Theme</div>
                     <div class="setting-item">
@@ -797,7 +940,6 @@ def generate_arcade():
                     </div>
                 </div>
 
-                <!-- Performance Group -->
                 <div class="settings-group">
                     <div class="settings-group-title">Performance & Monitoring</div>
                     <div class="setting-item">
@@ -816,7 +958,6 @@ def generate_arcade():
                     </div>
                 </div>
 
-                <!-- Audio Group -->
                 <div class="settings-group">
                     <div class="settings-group-title">Audio Controls</div>
                     <div class="setting-item">
@@ -828,6 +969,35 @@ def generate_arcade():
                     </div>
                 </div>
             </div>
+
+            <!-- Tab 2: Playtime & Analytics -->
+            <div id="tab-analytics" class="settings-tab-content">
+                <div class="analytics-summary">
+                    <div class="analytics-metric">
+                        <div class="analytics-metric-label">Total Time (7 Days)</div>
+                        <div id="analytics-total-time" class="analytics-metric-value">0m</div>
+                    </div>
+                    <div class="analytics-metric">
+                        <div class="analytics-metric-label">Games Played</div>
+                        <div id="analytics-total-games" class="analytics-metric-value">0</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Past Week Activity</div>
+                    <div class="chart-bars" id="chart-bars-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-title">Recent Game History</div>
+                    <div class="history-list" id="history-list-container">
+                        <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -876,12 +1046,117 @@ __CARDS_PLACEHOLDER__
         let showFps = false;
         let fpsInterval = null;
 
+        // Analytics State Variables
+        let currentGameName = '';
+        let gameStartTime = 0;
+        let sessionTimerInterval = null;
+
+        // Load analytics data from localStorage or initialize
+        let arcadeData = JSON.parse(localStorage.getItem('arcadeAnalytics')) || {
+            weeklyMinutes: [0, 0, 0, 0, 0, 0, 0], // Sun - Sat
+            history: [] // Array of { name, duration, date }
+        };
+
         function openSettingsModal() {
             settingsModal.style.display = 'flex';
+            updateAnalyticsUI();
         }
 
         function closeSettingsModal() {
             settingsModal.style.display = 'none';
+        }
+
+        function switchSettingsTab(tabName, btnElement) {
+            document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.settings-tab-content').forEach(content => content.classList.remove('active'));
+
+            btnElement.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            if (tabName === 'analytics') {
+                updateAnalyticsUI();
+            }
+        }
+
+        // --- Analytics & History Functions ---
+        function recordPlayTime(gameName, secondsElapsed) {
+            if (secondsElapsed <= 0) return;
+            const minutesToAdd = secondsElapsed / 60;
+            const todayIndex = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+
+            arcadeData.weeklyMinutes[todayIndex] += minutesToAdd;
+
+            // Update or add to history
+            const existingEntry = arcadeData.history.find(h => h.name === gameName);
+            if (existingEntry) {
+                existingEntry.duration += secondsElapsed;
+                existingEntry.timestamp = Date.now();
+            } else {
+                arcadeData.history.unshift({
+                    name: gameName,
+                    duration: secondsElapsed,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Keep history limited to last 10 entries
+            if (arcadeData.history.length > 10) {
+                arcadeData.history.pop();
+            }
+
+            localStorage.setItem('arcadeAnalytics', JSON.stringify(arcadeData));
+        }
+
+        function formatDuration(totalSeconds) {
+            if (totalSeconds < 60) return `${Math.round(totalSeconds)}s`;
+            const mins = Math.floor(totalSeconds / 60);
+            if (mins < 60) return `${mins}m`;
+            const hrs = (mins / 60).toFixed(1);
+            return `${hrs}h`;
+        }
+
+        function updateAnalyticsUI() {
+            // Total time calculation
+            const totalMinutes = arcadeData.weeklyMinutes.reduce((a, b) => a + b, 0);
+            document.getElementById('analytics-total-time').textContent = formatDuration(totalMinutes * 60);
+            document.getElementById('analytics-total-games').textContent = arcadeData.history.length;
+
+            // Render Weekly Bar Chart
+            const chartContainer = document.getElementById('chart-bars-container');
+            chartContainer.innerHTML = '';
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const maxMins = Math.max(...arcadeData.weeklyMinutes, 1);
+
+            arcadeData.weeklyMinutes.forEach((mins, idx) => {
+                const heightPercent = Math.min(Math.max((mins / maxMins) * 100, 4), 100);
+                
+                const col = document.createElement('div');
+                col.className = 'chart-bar-col';
+                col.innerHTML = `
+                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">${formatDuration(mins * 60)}</div>
+                    <div class="chart-bar" style="height: ${heightPercent}%;"></div>
+                    <div class="chart-day-label">${days[idx]}</div>
+                `;
+                chartContainer.appendChild(col);
+            });
+
+            // Render History List
+            const historyContainer = document.getElementById('history-list-container');
+            historyContainer.innerHTML = '';
+
+            if (arcadeData.history.length === 0) {
+                historyContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>';
+            } else {
+                arcadeData.history.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'history-item';
+                    row.innerHTML = `
+                        <span class="history-game-name">${item.name}</span>
+                        <span class="history-game-time">${formatDuration(item.duration)}</span>
+                    `;
+                    historyContainer.appendChild(row);
+                });
+            }
         }
 
         // --- Settings Implementation Functions ---
@@ -918,19 +1193,15 @@ __CARDS_PLACEHOLDER__
         }
 
         function muteAllAudioElements(mute) {
-            // Mute standard audio/video tags on the parent page
             const mediaEls = document.querySelectorAll('audio, video');
             mediaEls.forEach(el => el.muted = mute);
 
-            // Attempt to silence iframe audio if accessible (same-origin or Web Audio master)
             try {
                 if (iframe && iframe.contentWindow) {
                     const iframeMedia = iframe.contentWindow.document.querySelectorAll('audio, video');
                     iframeMedia.forEach(el => el.muted = mute);
                 }
-            } catch (e) {
-                // Cross-origin restriction fallback: handled visually/systemically via site-muted class
-            }
+            } catch (e) {}
         }
 
         function toggleFpsSetting(checkbox) {
@@ -991,7 +1262,7 @@ __CARDS_PLACEHOLDER__
             });
         });
 
-        function launchGame(gameFilePath) {
+        function launchGame(gameFilePath, gameTitle) {
             dashboardContainer.style.display = 'none';
             playView.style.display = 'block';
             
@@ -999,7 +1270,19 @@ __CARDS_PLACEHOLDER__
             isGameRunning = true;
             updateFpsVisibility();
 
-            // Apply global mute if enabled when launching
+            // Track playtime start
+            currentGameName = gameTitle;
+            gameStartTime = Date.now();
+            if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+            sessionTimerInterval = setInterval(() => {
+                // Periodic background record every 30 seconds of active play
+                const elapsedSec = (Date.now() - gameStartTime) / 1000;
+                if (elapsedSec >= 30) {
+                    recordPlayTime(currentGameName, 30);
+                    gameStartTime = Date.now();
+                }
+            }, 30000);
+
             if (document.getElementById('mute-toggle').checked) {
                 setTimeout(() => muteAllAudioElements(true), 500);
             }
@@ -1021,6 +1304,13 @@ __CARDS_PLACEHOLDER__
         }
 
         function exitToHub() {
+            // Save remaining playtime before closing session
+            if (isGameRunning && gameStartTime) {
+                const elapsedSec = (Date.now() - gameStartTime) / 1000;
+                recordPlayTime(currentGameName, elapsedSec);
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+            }
+
             iframe.src = ""; 
             pauseOverlay.style.display = 'none';
             playView.style.display = 'none';
@@ -1054,7 +1344,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print(f"Arcade sync successful! Updated settings with sub-directories, high contrast, performance mode, mute, and accent picker.")
+    print(f"Arcade sync successful! Added Playtime Analytics & History tab with weekly charts.")
 
 if __name__ == '__main__':
     generate_arcade()
