@@ -39,9 +39,9 @@ def generate_arcade():
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- Google Search Console Verification Tag -->
-    __GOOGLE_VERIFICATION_PLACEHOLDER__
+    <meta name="google-site-verification" content="SoFkZR3gCmDEKUOh6nJKASEXN0eakZbNsflg5EjVjjY" />
     
-    <!-- SEO Meta Description & Keywords -->
+    <!-- SEO Meta Tags & Keywords -->
     <meta name="description" content="Play 100% free serverless HTML5 arcade games, retro classics, and browser puzzles instantly at Tinker Tech Guy's Arcade." />
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -766,6 +766,38 @@ __CARDS_PLACEHOLDER__
 
         function toggleFpsSetting(checkbox) {
             showFps = checkbox.checked;
+            fpsOverlay.style.display = showFps ? 'block' : 'none';
+            if (showFps && isGameRunning) {
+                startFpsCounter();
+            } else {
+                stopFpsCounter();
+            }
+        }
+
+        function startFpsCounter() {
+            stopFpsCounter();
+            let frameCount = 0;
+            let lastTime = performance.now();
+            function measureFps(currentTime) {
+                frameCount++;
+                if (currentTime - lastTime >= 1000) {
+                    let fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                    fpsOverlay.textContent = `FPS: ${fps}`;
+                    frameCount = 0;
+                    lastTime = currentTime;
+                }
+                if (isGameRunning && showFps) {
+                    fpsInterval = requestAnimationFrame(measureFps);
+                }
+            }
+            fpsInterval = requestAnimationFrame(measureFps);
+        }
+
+        function stopFpsCounter() {
+            if (fpsInterval) {
+                cancelAnimationFrame(fpsInterval);
+                fpsInterval = null;
+            }
         }
 
         function cropImageToCircle(file, callback) {
@@ -1094,6 +1126,11 @@ __CARDS_PLACEHOLDER__
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
 
+            if (showFps) {
+                fpsOverlay.style.display = 'block';
+                startFpsCounter();
+            }
+
             currentGameName = gameTitle;
             gameStartTime = Date.now();
             if (sessionTimerInterval) clearInterval(sessionTimerInterval);
@@ -1129,6 +1166,8 @@ __CARDS_PLACEHOLDER__
             playView.style.display = 'none';
             dashboardContainer.style.display = 'flex';
             isGameRunning = false;
+            stopFpsCounter();
+            fpsOverlay.style.display = 'none';
             setTimeout(() => searchBar.focus(), 50);
         }
 
@@ -1145,14 +1184,12 @@ __CARDS_PLACEHOLDER__
 </html>
 """
 
-    google_meta_tag = '<meta name="google-site-verification" content="SoFkZR3gCmDEKUOh6nJKASEXN0eakZbNsflg5EjVjjY" />'
-    full_html_content = html_template.replace('__GOOGLE_VERIFICATION_PLACEHOLDER__', google_meta_tag)
-    full_html_content = full_html_content.replace('__CARDS_PLACEHOLDER__', all_cards_string)
+    full_html_content = html_template.replace('__CARDS_PLACEHOLDER__', all_cards_string)
 
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! SEO keywords and meta tags added.")
+    print("Arcade sync successful! All features, SEO tags, and bug fixes integrated.")
 
 if __name__ == '__main__':
     generate_arcade()
