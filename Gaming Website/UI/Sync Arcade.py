@@ -1100,6 +1100,13 @@ __CARDS_PLACEHOLDER__
             }
         }
 
+        // Auto-save every 10 seconds in the background when logged in
+        setInterval(() => {
+            if (currentAccount) {
+                cloudSyncSave();
+            }
+        }, 10000);
+
         async function deleteCloudAccount() {
             if (!currentAccount) return;
             const confirmDelete = confirm(`Are you sure you want to delete your account "${currentAccount.username}"? This will permanently remove your profile from the cloud database.`);
@@ -1245,7 +1252,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! Delete account feature added.")
+    print("Arcade sync successful! 10-second auto-save loop active.")
 
 if __name__ == '__main__':
     generate_arcade()
