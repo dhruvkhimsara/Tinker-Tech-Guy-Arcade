@@ -605,6 +605,7 @@ def generate_arcade():
                         <button class="account-btn" onclick="saveAccountEdits()">Save Profile Edits</button>
                     </div>
                     <button class="account-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; margin-top: 15px; width: 100%;" onclick="logoutAccount()">Sign Out</button>
+                    <button class="account-btn" style="background: #ef4444; color: #fff; border: none; margin-top: 10px; width: 100%;" onclick="deleteCloudAccount()">Delete Account</button>
                 </div>
             </div>
 
@@ -1099,6 +1100,27 @@ __CARDS_PLACEHOLDER__
             }
         }
 
+        async function deleteCloudAccount() {
+            if (!currentAccount) return;
+            const confirmDelete = confirm(`Are you sure you want to delete your account "${currentAccount.username}"? This will permanently remove your profile from the cloud database.`);
+            if (!confirmDelete) return;
+
+            try {
+                let db = await fetchGistDatabase();
+                if (!db.users) db.users = [];
+
+                db.users = db.users.filter(u => u.username.toLowerCase() !== currentAccount.username.toLowerCase());
+
+                await updateGistDatabase(db);
+                logoutAccount();
+                alert('Account deleted successfully. Reloading arcade...');
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert('Failed to delete account from cloud database.');
+            }
+        }
+
         function saveAccountEdits() {
             if (!currentAccount) return;
             const newName = document.getElementById('edit-username').value.trim();
@@ -1223,7 +1245,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! Import/Export options removed.")
+    print("Arcade sync successful! Delete account feature added.")
 
 if __name__ == '__main__':
     generate_arcade()
