@@ -514,6 +514,7 @@ def generate_arcade():
                 <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('account', this)">Account & Cloud Sync</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
+                <button class="settings-tab-btn" onclick="switchSettingsTab('import-export', this)">Import And Export</button>
             </div>
 
             <!-- General Tab -->
@@ -627,6 +628,35 @@ def generate_arcade():
                     <div class="settings-group-title">Recent Game History</div>
                     <div class="history-list" id="history-list-container">
                         <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import And Export Tab -->
+            <div id="tab-import-export" class="settings-tab-content">
+                <div class="settings-group">
+                    <div class="settings-group-title">Text File Backup</div>
+                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Export all your website save data, settings, and progress to a downloaded text file.</span>
+                        <button class="account-btn" style="width: 100%;" onclick="exportDataToFile()">Import To Text File (Download)</button>
+                    </div>
+                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 15px;">
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Import save data from a previously downloaded text file backup.</span>
+                        <label class="file-upload-btn" style="width: 100%; text-align: center; display: block;">
+                            Load From Text File (Upload) <input type="file" accept=".txt,.json" style="display: none;" onchange="importDataFromFile(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group" style="margin-top: 15px;">
+                    <div class="settings-group-title">Copy & Paste Save Code</div>
+                    <div class="account-form-group">
+                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Save Code String</label>
+                        <textarea id="save-code-textarea" class="account-input" rows="4" placeholder="Generate a code to copy, or paste your save code here..." style="resize: vertical; font-family: monospace; font-size: 0.8rem;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="account-btn" style="flex: 1;" onclick="generateSaveCode()">Copy Save Code</button>
+                        <button class="account-btn" style="flex: 1; background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green);" onclick="loadSaveCode()">Load Save Code</button>
                     </div>
                 </div>
             </div>
@@ -798,6 +828,80 @@ __CARDS_PLACEHOLDER__
             if (fpsInterval) {
                 cancelAnimationFrame(fpsInterval);
                 fpsInterval = null;
+            }
+        }
+
+        /* --- IMPORT & EXPORT FUNCTIONS --- */
+        function getAllLocalStorageData() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                data[key] = localStorage.getItem(key);
+            }
+            return JSON.stringify(data);
+        }
+
+        function restoreLocalStorageData(jsonString) {
+            try {
+                const data = JSON.parse(jsonString);
+                for (const key in data) {
+                    localStorage.setItem(key, data[key]);
+                }
+                alert('Save data restored successfully! Reloading arcade...');
+                location.reload();
+            } catch (e) {
+                alert('Invalid save data format.');
+            }
+        }
+
+        function exportDataToFile() {
+            const rawData = getAllLocalStorageData();
+            const blob = new Blob([rawData], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tinker-arcade-saves-${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importDataFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                restoreLocalStorageData(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function generateSaveCode() {
+            const rawData = getAllLocalStorageData();
+            const encoded = btoa(encodeURIComponent(rawData));
+            const textarea = document.getElementById('save-code-textarea');
+            textarea.value = encoded;
+            textarea.select();
+            navigator.clipboard.writeText(encoded).then(() => {
+                alert('Save code generated and copied to clipboard!');
+            }).catch(() => {
+                alert('Save code generated! You can copy it directly from the text box.');
+            });
+        }
+
+        function loadSaveCode() {
+            const textarea = document.getElementById('save-code-textarea');
+            const encoded = textarea.value.trim();
+            if (!encoded) {
+                alert('Please paste a save code into the text box first.');
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(atob(encoded));
+                restoreLocalStorageData(decoded);
+            } catch (e) {
+                alert('Invalid save code string. Please check your code and try again.');
             }
         }
 
