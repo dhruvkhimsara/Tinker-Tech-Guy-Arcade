@@ -586,7 +586,10 @@ def generate_arcade():
                             <div id="profile-username-display" style="font-size: 1.2rem; font-weight: 900; color: var(--accent-green);">Player</div>
                         </div>
                     </div>
-                    <div class="settings-group" style="margin-top: 15px;">
+                    <div style="margin-top: 15px;">
+                        <button class="account-btn" id="toggle-edit-mode-btn" style="width: 100%; background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green);" onclick="toggleAccountEditSection()">Edit Account Details</button>
+                    </div>
+                    <div class="settings-group" id="account-edit-section" style="margin-top: 15px; display: none;">
                         <div class="settings-group-title">Edit Account Details</div>
                         <div class="account-form-group">
                             <label style="font-size: 0.8rem; color: var(--text-muted);">New Username</label>
@@ -601,8 +604,8 @@ def generate_arcade():
                             <label class="file-upload-btn">Choose Image <input type="file" accept="image/*" style="display: none;" onchange="handleEditUserAvatar(event)"></label>
                         </div>
                         <button class="account-btn" onclick="saveAccountEdits()">Save Profile Edits</button>
-                        <button class="account-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; margin-top: 8px;" onclick="logoutAccount()">Sign Out</button>
                     </div>
+                    <button class="account-btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; margin-top: 15px; width: 100%;" onclick="logoutAccount()">Sign Out</button>
                 </div>
             </div>
 
@@ -635,28 +638,28 @@ def generate_arcade():
             <!-- Import And Export Tab -->
             <div id="tab-import-export" class="settings-tab-content">
                 <div class="settings-group">
-                    <div class="settings-group-title">Text File Backup</div>
+                    <div class="settings-group-title">Cloud String Sync</div>
                     <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Export all your website save data, settings, and progress to a downloaded text file.</span>
-                        <button class="account-btn" style="width: 100%;" onclick="exportDataToFile()">Import To Text File (Download)</button>
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Save your encrypted string data to your cloud account database.</span>
+                        <button class="account-btn" style="width: 100%;" onclick="cloudSaveStringData()">Save To Cloud</button>
                     </div>
                     <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 15px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Import save data from a previously downloaded text file backup.</span>
-                        <label class="file-upload-btn" style="width: 100%; text-align: center; display: block;">
-                            Load From Text File (Upload) <input type="file" accept=".txt,.json" style="display: none;" onchange="importDataFromFile(event)">
-                        </label>
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Load and restore your encrypted string data from your cloud account database.</span>
+                        <button class="account-btn" style="width: 100%; background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green);" onclick="cloudLoadStringData()">Load From Cloud</button>
                     </div>
                 </div>
 
                 <div class="settings-group" style="margin-top: 15px;">
-                    <div class="settings-group-title">Copy & Paste Save Code</div>
-                    <div class="account-form-group">
-                        <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Save Code String</label>
-                        <textarea id="save-code-textarea" class="account-input" rows="4" placeholder="Generate a code to copy, or paste your save code here..." style="resize: vertical; font-family: monospace; font-size: 0.8rem;"></textarea>
+                    <div class="settings-group-title">Text File Backup</div>
+                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Export your encrypted save string into a downloaded text file.</span>
+                        <button class="account-btn" style="width: 100%;" onclick="exportDataToFile()">Save To File (Download)</button>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="account-btn" style="flex: 1;" onclick="generateSaveCode()">Copy Save Code</button>
-                        <button class="account-btn" style="flex: 1; background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green);" onclick="loadSaveCode()">Load Save Code</button>
+                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 15px;">
+                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Import save data from a text file backup.</span>
+                        <label class="file-upload-btn" style="width: 100%; text-align: center; display: block;">
+                            Load From File (Upload) <input type="file" accept=".txt,.json" style="display: none;" onchange="importDataFromFile(event)">
+                        </label>
                     </div>
                 </div>
             </div>
@@ -715,8 +718,8 @@ __CARDS_PLACEHOLDER__
         let fpsInterval = null;
         let temporaryAvatarData = '👾';
 
-        const JSONBIN_BIN_ID = '6acbbc99ffd5d1605361ea78';
-        const JSONBIN_API_KEY = '$2a$10$kGKr/g4JvRiMS38uIrheZuMovM7JzvL0/OpwdqgNETjl.itPCxZbS';
+        const GIST_ID = 'b0c5cf08f72b3303f5feed94eaecad45';
+        const GIST_TOKEN = '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';
 
         let arcadeData = JSON.parse(localStorage.getItem('arcadeAnalytics')) || {
             favorites: [],
@@ -841,6 +844,11 @@ __CARDS_PLACEHOLDER__
             return JSON.stringify(data);
         }
 
+        function getSaveStringCode() {
+            const rawData = getAllLocalStorageData();
+            return btoa(encodeURIComponent(rawData));
+        }
+
         function restoreLocalStorageData(jsonString) {
             try {
                 const data = JSON.parse(jsonString);
@@ -855,12 +863,12 @@ __CARDS_PLACEHOLDER__
         }
 
         function exportDataToFile() {
-            const rawData = getAllLocalStorageData();
-            const blob = new Blob([rawData], { type: 'text/plain;charset=utf-8' });
+            const codeString = getSaveStringCode();
+            const blob = new Blob([codeString], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `tinker-arcade-saves-${new Date().toISOString().slice(0, 10)}.txt`;
+            a.download = `tinker-arcade-save-${new Date().toISOString().slice(0, 10)}.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -872,36 +880,93 @@ __CARDS_PLACEHOLDER__
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                restoreLocalStorageData(e.target.result);
+                try {
+                    const decoded = decodeURIComponent(atob(e.target.result.trim()));
+                    restoreLocalStorageData(decoded);
+                } catch (err) {
+                    alert('Invalid backup file formatting.');
+                }
             };
             reader.readAsText(file);
         }
 
-        function generateSaveCode() {
-            const rawData = getAllLocalStorageData();
-            const encoded = btoa(encodeURIComponent(rawData));
-            const textarea = document.getElementById('save-code-textarea');
-            textarea.value = encoded;
-            textarea.select();
-            navigator.clipboard.writeText(encoded).then(() => {
-                alert('Save code generated and copied to clipboard!');
-            }).catch(() => {
-                alert('Save code generated! You can copy it directly from the text box.');
-            });
+        async function cloudSaveStringData() {
+            if (!currentAccount) {
+                alert('Please sign into a cloud account first to save to the cloud.');
+                return;
+            }
+            const saveString = getSaveStringCode();
+            try {
+                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
+                });
+                const gistData = await response.json();
+                const fileContent = gistData.files['arcade_db.json'].content;
+                let db = JSON.parse(fileContent) || { users: [] };
+                if (!db.users) db.users = [];
+
+                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
+                if (userIndex !== -1) {
+                    db.users[userIndex].saveString = saveString;
+                }
+
+                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Authorization': `token ${GIST_TOKEN}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        files: {
+                            'arcade_db.json': {
+                                content: JSON.stringify(db, null, 2)
+                            }
+                        }
+                    })
+                });
+                alert('Save string successfully uploaded to your cloud account!');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to save to cloud.');
+            }
         }
 
-        function loadSaveCode() {
-            const textarea = document.getElementById('save-code-textarea');
-            const encoded = textarea.value.trim();
-            if (!encoded) {
-                alert('Please paste a save code into the text box first.');
+        async function cloudLoadStringData() {
+            if (!currentAccount) {
+                alert('Please sign into a cloud account first to load from the cloud.');
                 return;
             }
             try {
-                const decoded = decodeURIComponent(atob(encoded));
-                restoreLocalStorageData(decoded);
-            } catch (e) {
-                alert('Invalid save code string. Please check your code and try again.');
+                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
+                });
+                const gistData = await response.json();
+                const fileContent = gistData.files['arcade_db.json'].content;
+                let db = JSON.parse(fileContent) || { users: [] };
+                if (!db.users) db.users = [];
+
+                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
+                if (userIndex !== -1 && db.users[userIndex].saveString) {
+                    const decoded = decodeURIComponent(atob(db.users[userIndex].saveString));
+                    restoreLocalStorageData(decoded);
+                } else {
+                    alert('No save string found on your cloud account.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load from cloud.');
+            }
+        }
+
+        function toggleAccountEditSection() {
+            const editSection = document.getElementById('account-edit-section');
+            const toggleBtn = document.getElementById('toggle-edit-mode-btn');
+            if (editSection.style.display === 'none') {
+                editSection.style.display = 'block';
+                toggleBtn.textContent = 'Hide Edit Details';
+            } else {
+                editSection.style.display = 'none';
+                toggleBtn.textContent = 'Edit Account Details';
             }
         }
 
@@ -1086,11 +1151,12 @@ __CARDS_PLACEHOLDER__
             }
 
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
                 });
-                const result = await response.json();
-                let db = result.record || { users: [] };
+                const gistData = await response.json();
+                const fileContent = gistData.files['arcade_db.json'].content;
+                let db = JSON.parse(fileContent) || { users: [] };
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === usernameInput.toLowerCase());
@@ -1129,27 +1195,38 @@ __CARDS_PLACEHOLDER__
                     }
                 }
 
-                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
-                    body: JSON.stringify(db)
+                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Authorization': `token ${GIST_TOKEN}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        files: {
+                            'arcade_db.json': {
+                                content: JSON.stringify(db, null, 2)
+                            }
+                        }
+                    })
                 });
 
                 localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
                 checkAccountUIState();
             } catch (err) {
                 console.error(err);
+                alert('Cloud authentication error. Please check console.');
             }
         }
 
         async function cloudSyncSave() {
             if (!currentAccount) return;
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
                 });
-                const result = await response.json();
-                let db = result.record || { users: [] };
+                const gistData = await response.json();
+                const fileContent = gistData.files['arcade_db.json'].content;
+                let db = JSON.parse(fileContent) || { users: [] };
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
@@ -1160,10 +1237,19 @@ __CARDS_PLACEHOLDER__
                     db.users[userIndex].username = currentAccount.username;
                 }
 
-                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
-                    body: JSON.stringify(db)
+                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Authorization': `token ${GIST_TOKEN}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        files: {
+                            'arcade_db.json': {
+                                content: JSON.stringify(db, null, 2)
+                            }
+                        }
+                    })
                 });
             } catch (err) {
                 console.error(err);
@@ -1294,7 +1380,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! All features, SEO tags, and bug fixes integrated.")
+    print("Arcade sync successful! All features integrated.")
 
 if __name__ == '__main__':
     generate_arcade()
