@@ -514,7 +514,6 @@ def generate_arcade():
                 <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('account', this)">Account Profile</button>
                 <button class="settings-tab-btn" onclick="switchSettingsTab('analytics', this)">Playtime & History</button>
-                <button class="settings-tab-btn" onclick="switchSettingsTab('import-export', this)">Import And Export</button>
             </div>
 
             <!-- General Tab -->
@@ -631,35 +630,6 @@ def generate_arcade():
                     <div class="settings-group-title">Recent Game History</div>
                     <div class="history-list" id="history-list-container">
                         <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No games played yet this week.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Import And Export Tab -->
-            <div id="tab-import-export" class="settings-tab-content">
-                <div class="settings-group">
-                    <div class="settings-group-title">Cloud String Sync</div>
-                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Save your encrypted string data to your cloud account database.</span>
-                        <button class="account-btn" style="width: 100%;" onclick="cloudSaveStringData()">Save To Cloud</button>
-                    </div>
-                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 15px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Load and restore your encrypted string data from your cloud account database.</span>
-                        <button class="account-btn" style="width: 100%; background: transparent; border: 1px solid var(--accent-green); color: var(--accent-green);" onclick="cloudLoadStringData()">Load From Cloud</button>
-                    </div>
-                </div>
-
-                <div class="settings-group" style="margin-top: 15px;">
-                    <div class="settings-group-title">Text File Backup</div>
-                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Export your encrypted save string into a downloaded text file.</span>
-                        <button class="account-btn" style="width: 100%;" onclick="exportDataToFile()">Save To File (Download)</button>
-                    </div>
-                    <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 15px;">
-                        <span class="setting-label" style="font-size: 0.85rem; color: var(--text-muted);">Import save data from a text file backup.</span>
-                        <label class="file-upload-btn" style="width: 100%; text-align: center; display: block;">
-                            Load From File (Upload) <input type="file" accept=".txt,.json" style="display: none;" onchange="importDataFromFile(event)">
-                        </label>
                     </div>
                 </div>
             </div>
@@ -841,62 +811,6 @@ __CARDS_PLACEHOLDER__
             }
         }
 
-        /* --- IMPORT & EXPORT FUNCTIONS --- */
-        function getAllLocalStorageData() {
-            const data = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                data[key] = localStorage.getItem(key);
-            }
-            return JSON.stringify(data);
-        }
-
-        function getSaveStringCode() {
-            const rawData = getAllLocalStorageData();
-            return btoa(encodeURIComponent(rawData));
-        }
-
-        function restoreLocalStorageData(jsonString) {
-            try {
-                const data = JSON.parse(jsonString);
-                for (const key in data) {
-                    localStorage.setItem(key, data[key]);
-                }
-                alert('Save data restored successfully! Reloading arcade...');
-                location.reload();
-            } catch (e) {
-                alert('Invalid save data format.');
-            }
-        }
-
-        function exportDataToFile() {
-            const codeString = getSaveStringCode();
-            const blob = new Blob([codeString], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `tinker-arcade-save-${new Date().toISOString().slice(0, 10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function importDataFromFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const decoded = decodeURIComponent(atob(e.target.result.trim()));
-                    restoreLocalStorageData(decoded);
-                } catch (err) {
-                    alert('Invalid backup file formatting.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
         async function fetchGistDatabase() {
             const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
                 headers: { 'Authorization': getGithubAuthHeader() }
@@ -922,51 +836,6 @@ __CARDS_PLACEHOLDER__
                 })
             });
             if (!res.ok) throw new Error('Failed to update Gist database');
-        }
-
-        async function cloudSaveStringData() {
-            if (!currentAccount) {
-                alert('Please sign into a cloud account first to save to the cloud.');
-                return;
-            }
-            const saveString = getSaveStringCode();
-            try {
-                let db = await fetchGistDatabase();
-                if (!db.users) db.users = [];
-
-                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
-                if (userIndex !== -1) {
-                    db.users[userIndex].saveString = saveString;
-                }
-
-                await updateGistDatabase(db);
-                alert('Save string successfully uploaded to your cloud account!');
-            } catch (err) {
-                console.error(err);
-                alert('Failed to save to cloud.');
-            }
-        }
-
-        async function cloudLoadStringData() {
-            if (!currentAccount) {
-                alert('Please sign into a cloud account first to load from the cloud.');
-                return;
-            }
-            try {
-                let db = await fetchGistDatabase();
-                if (!db.users) db.users = [];
-
-                let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
-                if (userIndex !== -1 && db.users[userIndex].saveString) {
-                    const decoded = decodeURIComponent(atob(db.users[userIndex].saveString));
-                    restoreLocalStorageData(decoded);
-                } else {
-                    alert('No save string found on your cloud account.');
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Failed to load from cloud.');
-            }
         }
 
         function toggleAccountEditSection() {
@@ -1354,7 +1223,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! Updated token and UI labels integrated cleanly.")
+    print("Arcade sync successful! Import/Export options removed.")
 
 if __name__ == '__main__':
     generate_arcade()
