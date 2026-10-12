@@ -718,9 +718,6 @@ __CARDS_PLACEHOLDER__
         let fpsInterval = null;
         let temporaryAvatarData = '👾';
 
-        const GIST_ID = 'b0c5cf08f72b3303f5feed94eaecad45';
-        const GIST_TOKEN = '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';
-
         let arcadeData = JSON.parse(localStorage.getItem('arcadeAnalytics')) || {
             favorites: [],
             weeklyMinutes: [0, 0, 0, 0, 0, 0, 0],
@@ -897,12 +894,8 @@ __CARDS_PLACEHOLDER__
             }
             const saveString = getSaveStringCode();
             try {
-                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
-                });
-                const gistData = await response.json();
-                const fileContent = gistData.files['arcade_db.json'].content;
-                let db = JSON.parse(fileContent) || { users: [] };
+                const getRes = await fetch('/api/sync');
+                let db = await getRes.json();
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
@@ -910,20 +903,12 @@ __CARDS_PLACEHOLDER__
                     db.users[userIndex].saveString = saveString;
                 }
 
-                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    method: 'PATCH',
-                    headers: { 
-                        'Authorization': `token ${GIST_TOKEN}`,
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({
-                        files: {
-                            'arcade_db.json': {
-                                content: JSON.stringify(db, null, 2)
-                            }
-                        }
-                    })
+                const postRes = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(db)
                 });
+                if (!postRes.ok) throw new Error('Cloud save failed');
                 alert('Save string successfully uploaded to your cloud account!');
             } catch (err) {
                 console.error(err);
@@ -937,12 +922,8 @@ __CARDS_PLACEHOLDER__
                 return;
             }
             try {
-                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
-                });
-                const gistData = await response.json();
-                const fileContent = gistData.files['arcade_db.json'].content;
-                let db = JSON.parse(fileContent) || { users: [] };
+                const getRes = await fetch('/api/sync');
+                let db = await getRes.json();
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
@@ -1151,12 +1132,8 @@ __CARDS_PLACEHOLDER__
             }
 
             try {
-                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
-                });
-                const gistData = await response.json();
-                const fileContent = gistData.files['arcade_db.json'].content;
-                let db = JSON.parse(fileContent) || { users: [] };
+                const getRes = await fetch('/api/sync');
+                let db = await getRes.json();
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === usernameInput.toLowerCase());
@@ -1195,19 +1172,10 @@ __CARDS_PLACEHOLDER__
                     }
                 }
 
-                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    method: 'PATCH',
-                    headers: { 
-                        'Authorization': `token ${GIST_TOKEN}`,
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({
-                        files: {
-                            'arcade_db.json': {
-                                content: JSON.stringify(db, null, 2)
-                            }
-                        }
-                    })
+                await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(db)
                 });
 
                 localStorage.setItem('arcadeAccount', JSON.stringify(currentAccount));
@@ -1221,12 +1189,8 @@ __CARDS_PLACEHOLDER__
         async function cloudSyncSave() {
             if (!currentAccount) return;
             try {
-                const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    headers: { 'Authorization': `token ${GIST_TOKEN}` }
-                });
-                const gistData = await response.json();
-                const fileContent = gistData.files['arcade_db.json'].content;
-                let db = JSON.parse(fileContent) || { users: [] };
+                const getRes = await fetch('/api/sync');
+                let db = await getRes.json();
                 if (!db.users) db.users = [];
 
                 let userIndex = db.users.findIndex(u => u.username.toLowerCase() === currentAccount.username.toLowerCase());
@@ -1237,19 +1201,10 @@ __CARDS_PLACEHOLDER__
                     db.users[userIndex].username = currentAccount.username;
                 }
 
-                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-                    method: 'PATCH',
-                    headers: { 
-                        'Authorization': `token ${GIST_TOKEN}`,
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({
-                        files: {
-                            'arcade_db.json': {
-                                content: JSON.stringify(db, null, 2)
-                            }
-                        }
-                    })
+                await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(db)
                 });
             } catch (err) {
                 console.error(err);
@@ -1380,7 +1335,7 @@ __CARDS_PLACEHOLDER__
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         f.write(full_html_content)
     
-    print("Arcade sync successful! All features integrated.")
+    print("Arcade sync successful! Frontend cleanly decoupled from API keys.")
 
 if __name__ == '__main__':
     generate_arcade()
