@@ -1186,6 +1186,8 @@ __CARDS_PLACEHOLDER__
         function launchGame(gameFilePath, gameTitle) {
             dashboardContainer.style.display = 'none';
             playView.style.display = 'block';
+            
+            // Instantly show the game page and load the game inside the iframe
             iframe.src = gameFilePath + '?t=' + new Date().getTime();
             isGameRunning = true;
 
